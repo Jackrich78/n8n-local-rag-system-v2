@@ -1,0 +1,179 @@
+{
+  "name": "Ollama HTTP docker test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "19617cf6-feb5-4d88-ba18-e7161eb4f974",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "  {\n    \"role\": \"user\",\n    \"content\": \"Hello Ollama! Write a very short poem about the power of a keyboard.\"\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "1060bfca-a3cf-4d7d-a6ca-aae5abefb626",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen3:8b\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.content }}\" \n    }\n  ],\n  \"stream\": false\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "132ac03c-f40e-4f8d-a0c8-69bf3f948710",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "473412a6-17ff-472f-8e67-06cf19fcfef5",
+              "name": "content_without_think_tags",
+              "value": "={{ $json.message.content.replace(/<think>[\\s\\S]*?<\\/think>\\s*\\n*/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "5f24a594-de7b-46b7-97e3-8a8a1c539ae2",
+              "name": "llm_response_new_line_to_space",
+              "value": "={{ $json.message.content.replace(/\\n/g, ' ') }}",
+              "type": "string"
+            },
+            {
+              "id": "1f8e4d5e-a83e-4996-8213-7ca8a30eaab4",
+              "name": "llm_response_collapse_new_lines",
+              "value": "={{ $json.message.content.replace(/\\n\\s*\\n+/g, '\\n').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "c8fbb1c4-7946-42cd-b218-f78f990cfc44",
+              "name": "=content_without_new_lines",
+              "value": "={{ $json.content_without_think_tags.replace(/\\n/g, ' ').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        0
+      ],
+      "id": "19a961d2-6364-4fcc-8ed8-daa2622d76e5",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3992fae6-fed8-419e-a10d-eba05134eb5c",
+              "name": "content_without_new_lines",
+              "value": "={{ $json.content_without_think_tags.replace(/\\n\\s*\\n+/g, '\\n').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        0
+      ],
+      "id": "4150e5ba-e0eb-4e67-b10c-77c57e26b77b",
+      "name": "Edit Fields2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3b15fbb0-13f5-4a4a-a481-04c3a2bf95da",
+  "meta": {
+    "instanceId": "e700d34c5408b0209d1ce8b933c3446d0d7eaed27a3db321d68067caa1332dae"
+  },
+  "id": "nWxrAiv8UP7AM7Ge",
+  "tags": []
+}
