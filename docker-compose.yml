@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   n8n:
     image: n8nio/n8n:latest # You can pin to a specific version like n8nio/n8n:1.92.2 if preferred
