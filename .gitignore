@@ -1,0 +1,27 @@
+# Docker
+n8n_data/
+db_data/ # For when we add a local database later
+.env
+
+# Python (if we add Python services later)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*venv*/
+*.venv/
+
+# Node.js (if we add Node.js services later)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# IDE & OS specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

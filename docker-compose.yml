@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest # You can pin to a specific version like n8nio/n8n:1.92.2 if preferred
+    container_name: ultimate_n8n_rag
+    restart: unless-stopped
+    ports:
+      - "5678:5678" # Exposes n8n on localhost:5678
+    environment:
+      - N8N_HOST=localhost # Or your machine's IP if accessing from other devices on network
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production # Recommended for stability
+      - GENERIC_TIMEZONE=Europe/Madrid # Set to your timezone: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true # Good practice
+      - N8N_RUNNERS_ENABLED=true # Recommended
+      # If you want n8n to pick up .env variables for its own settings (e.g. for $env.OPENAI_API_KEY):
+      # You'd create a .env file in this same directory (ultimate-n8n-rag-system)
+      # And list them here, or use `env_file: ./.env`
+      # For now, we'll configure credentials directly in n8n UI as it worked before.
+    env_file:
+      - ./.env # This tells Docker Compose to load variables from the .env file in the same directory
+    volumes:
+      - n8n_data:/home/node/.n8n # Persists n8n data using a named volume
+    # Optional: If you want to mount local workflows directly for easier access (less common for production)
+    # - ./n8n_workflows:/home/node/n8n_workflows
+    # For now, we'll import workflows via the UI.
+
+volumes:
+  n8n_data: # Defines the named volume for data persistence
