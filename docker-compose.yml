@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: n8nio/n8n:latest # You can pin to a specific version like n8nio/n8n:1.92.2 if preferred
+    image: n8nio/n8n:1.98.0 # You can pin to a specific version like n8nio/n8n:1.92.2 if preferred
     container_name: ultimate_n8n_rag
     restart: unless-stopped
     ports:

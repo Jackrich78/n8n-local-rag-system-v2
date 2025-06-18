@@ -1,0 +1,4044 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Lead Capture & Analysis",
+        "formDescription": "Enter lead information to start AI-powered email nurturing sequence",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "John Smith",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "placeholder": "john@company.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company",
+              "placeholder": "Company Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Job Title",
+              "placeholder": "CEO, Marketing Director, etc."
+            },
+            {
+              "fieldLabel": "Company Website",
+              "placeholder": "https://company.com"
+            },
+            {
+              "fieldLabel": "Pain Points / Challenges",
+              "fieldType": "textarea",
+              "placeholder": "What challenges are you facing?"
+            },
+            {
+              "fieldLabel": "Lead Source",
+              "placeholder": "LinkedIn, Website, Referral, etc."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        120
+      ],
+      "id": "af82bfb2-e92e-4878-ad73-578f0da07ec4",
+      "name": "Lead Capture Form",
+      "webhookId": "lead-capture-form"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "lead-id",
+              "name": "leadId",
+              "value": "={{ $json.Email.split('@')[0] + '_' + Date.now() }}",
+              "type": "string"
+            },
+            {
+              "id": "2fd4b655-6b19-4b89-b345-e12ebbd2c9bc",
+              "name": "Full Name",
+              "value": "={{ $json[\"Full Name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ff23cfe4-95b9-4c4a-b9a0-0455fb03a2be",
+              "name": "Email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "88fd8627-374b-4700-9a5a-cb0a84bf7940",
+              "name": "Company",
+              "value": "={{ $json.Company }}",
+              "type": "string"
+            },
+            {
+              "id": "5ad40e0e-f09f-40ef-a144-1ea8aafdac65",
+              "name": "Job Title",
+              "value": "={{ $json[\"Job Title\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ae7e764f-98fa-4d39-8122-6a0e3cfb2b2a",
+              "name": "Company Website",
+              "value": "={{ $json[\"Company Website\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "46defbf2-9410-4691-b6b2-7efd05722872",
+              "name": "Pain Points / Challenges",
+              "value": "={{ $json[\"Pain Points / Challenges\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "16d8f2b8-0050-470f-8709-841f4b802a1e",
+              "name": "Lead Source",
+              "value": "={{ $json[\"Lead Source\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp-id",
+              "name": "timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -900,
+        120
+      ],
+      "id": "aa256754-775f-40a4-95e5-c0ba38efe58d",
+      "name": "Prepare Lead Data"
+    },
+    {
+      "parameters": {
+        "url": "=https://emailverifier.reoon.com/api/v1/verify?email={{ $json.Email }}&key={Your API Key}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -680,
+        120
+      ],
+      "id": "dea6eff6-bb2d-4b24-bd9b-f7532ca1ec8d",
+      "name": "Email Verification",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "email-valid-check",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "valid",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -460,
+        120
+      ],
+      "id": "bd5b526e-8129-425f-998b-4f04817b0be4",
+      "name": "Email Validation Check"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead Information:\n- Name: {{ $json.fullName }}\n- Company: {{ $json.company }}\n- Job Title: {{ $json.jobTitle }}\n- Website: {{ $json.companyWebsite }}\n- Pain Points: {{ $json.painPoints }}\n- Lead Source: {{ $json.leadSource }}\n\n\nDetailed Analysis About His Company : \n{{ $json.final_company_data }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert lead behavior analyst and sales psychologist. Your task is to analyze incoming lead data and provide deep insights about their behavior patterns, pain points, motivations, and optimal communication strategies.\n\nAnalyze the provided lead information and return a structured analysis including:\n\n1. **Pain Point Analysis**: Identify primary and secondary pain points\n2. **Behavioral Profile**: Communication style preferences, decision-making patterns\n3. **Journey Stage**: Where they are in the buying journey (awareness, consideration, decision)\n4. **Psychological Triggers**: What motivates them (urgency, social proof, authority, etc.)\n5. **Optimal Approach**: Recommended communication tone, frequency, and messaging angles\n6. **Risk Factors**: Potential objections or concerns they might have\n7. **Engagement Predictors**: Likelihood to engage and conversion probability\n\nProvide actionable insights that can be used to create highly personalized email sequences."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2660,
+        200
+      ],
+      "id": "b4f123bd-62df-424e-9999-2f021299e4f1",
+      "name": "Lead Behavior Analyzer"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2940,
+        420
+      ],
+      "id": "7e3633ab-dfed-4a6e-807f-4410def79189",
+      "name": "OpenAI Analyzer Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"pain_points\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"primary\": {\"type\": \"string\"},\n        \"secondary\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}\n      }\n    },\n    \"behavioral_profile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"communication_style\": {\"type\": \"string\"},\n        \"decision_making\": {\"type\": \"string\"},\n        \"engagement_level\": {\"type\": \"string\"}\n      }\n    },\n    \"journey_stage\": {\"type\": \"string\"},\n    \"psychological_triggers\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n    \"optimal_approach\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"tone\": {\"type\": \"string\"},\n        \"frequency\": {\"type\": \"string\"},\n        \"messaging_angles\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}\n      }\n    },\n    \"conversion_probability\": {\"type\": \"string\"}\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2660,
+        420
+      ],
+      "id": "90a89876-7075-4671-af71-85528c2e2193",
+      "name": "Behavior Analysis Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Lead Profile Data:\n- **Name:** {{ $('Code2').item.json.fullName }}\n- **Company:** {{ $('Code2').item.json.company }}\n- **Job Title:** {{ $('Code2').item.json.jobTitle }}\n- **Lead's Company Industry Context:** {{ $('Code2').item.json.final_company_data }}\n\n## Lead Analysis Insights:\n- **Primary Pain Points:** {{ $json.output.pain_points.primary }}\n- **Secondary Pain Points:** {{ $json.output.pain_points.secondary }}\n- **Communication Style:** {{ $json.output.behavioral_profile.communication_style }}\n- **Decision Making Style:** {{ $json.output.behavioral_profile.decision_making }}\n- **Engagement Level:** {{ $json.output.behavioral_profile.engagement_level }}\n- **Buyer Journey Stage:** {{ $json.output.journey_stage }}\n- **Psychological Triggers:** {{ $json.output.psychological_triggers }}\n- **Recommended Tone:** {{ $json.output.optimal_approach.tone }}\n- **Contact Frequency:** {{ $json.output.optimal_approach.frequency }}\n- **Messaging Angles:** {{ $json.output.optimal_approach.messaging_angles }}\n- **Conversion Probability:** {{ $json.output.conversion_probability }}\n\n## OUR BUSINESS (Anytime Fitness):\n**Sender:** Dave Mortensen  \n**Website:** https://www.anytimefitness.co.in/  \n**Business:** Anytime Fitness - 24/7 Global Gym Franchise  \n\n### Our Value Proposition:\n- 24/7 accessibility for busy professionals\n- Global network of 5,200+ locations across 50 countries\n- Community-driven fitness with coaching support\n- Modern equipment and personalized training\n- Digital perks including app-based workouts and fitness consultations\n\n### Our Target Benefits:\n- Stress relief and mental clarity for high-performers\n- Flexible scheduling for demanding work schedules  \n- Health optimization for career longevity\n- Team building and corporate wellness solutions\n- Convenient fitness access during business travel\n\n---\n\n## EMAIL GENERATION INSTRUCTIONS:\n\n**CRITICAL:** This email must promote ANYTIME FITNESS membership and direct the lead to visit **https://www.anytimefitness.co.in/**\n\n### Requirements:\n1. **Use the lead's company context** only to understand their work environment and relate to their challenges\n2. **Connect their professional pain points** to how fitness/wellness can address these issues\n3. **Position Anytime Fitness** as the solution that fits their busy professional lifestyle\n4. **Include a clear call-to-action** directing them to our website: https://www.anytimefitness.co.in/\n5. **Sign as Dave Mortensen from Anytime Fitness**\n\n### Email Structure:\n- **Opening:** Personalized greeting acknowledging their role and company\n- **Connection:** Relate their professional challenges to wellness needs\n- **Solution:** Present Anytime Fitness benefits that address their specific situation\n- **Social Proof:** Mention our global presence and community\n- **Call-to-Action:** Direct them to visit our website for membership information\n- **Signature:** Dave Mortensen, Anytime Fitness\n\n### Tone Guidelines:\n- Professional yet approachable\n- Focused on health/wellness benefits for their career success\n- Confident but not pushy\n- Emphasize convenience and flexibility\n\n**REMEMBER:** The lead's company data should only provide context - the email must exclusively promote Anytime Fitness membership and drive traffic to our gym website.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert email sequence strategist and copywriter. Based on the lead's behavioral analysis and profile, create a comprehensive 3-email nurturing sequence that addresses their specific pain points and motivations.\n\nFor each email in the sequence, provide:\n\n1. **Email Purpose**: What this email aims to achieve\n2. **Subject Line Options**: 3 different subject lines using different psychological triggers\n3. **Email Content**: Complete email copy (150-250 words)\n4. **Call-to-Action**: Specific next step for the lead\n5. **Psychological Trigger**: Primary trigger used (urgency, social proof, curiosity, etc.)\n\nSequence Structure:\n- Email 1: Welcome & Value Introduction\n- Email 2: Problem Agitation & Solution Preview\n- Email 3: Final Value-Add & Clear CTA\n\nTailor each email to the lead's specific profile, pain points, and communication preferences identified in the analysis.\n\nAlso, incorporate their leads company's post activities information for better personalisation and try relating the post and the CTA. (If data is available)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3040,
+        200
+      ],
+      "id": "28718743-da93-4119-9adf-009cabf6d061",
+      "name": "Email Sequence Generator"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"email_sequence\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"email_number\": {\"type\": \"number\"},\n          \"purpose\": {\"type\": \"string\"},\n          \"subject_lines\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n          \"content\": {\"type\": \"string\"},\n          \"call_to_action\": {\"type\": \"string\"},\n          \"timing\": {\"type\": \"string\"},\n          \"psychological_trigger\": {\"type\": \"string\"}\n        }\n      }\n    }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        3280,
+        420
+      ],
+      "id": "17299829-438a-44e5-923f-2bf8b1f4193a",
+      "name": "Email Sequence Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0921GJLX24",
+          "mode": "list",
+          "cachedResultName": "test"
+        },
+        "text": "Invalid Email Entered by Lead.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -220,
+        260
+      ],
+      "id": "2c6f2565-7f7c-4c11-82ea-3575b55b5c92",
+      "name": "Slack",
+      "webhookId": "ebe1134a-8cc0-480a-857c-9b1b9b91ba00",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "d8KK9qWf0jBQcjSZ",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "originalStartUrl",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        180,
+        0
+      ],
+      "id": "cfc3f762-92ea-49b6-8366-addcd187e5e2",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data from the previous node\nconst inputData = $input.all();\n\n// Initialize aggregation object\nconst aggregated = {\n  emails: [],\n  phones: [],\n  phonesUncertain: [],\n  linkedIns: [],\n  twitters: [],\n  instagrams: [],\n  facebooks: [],\n  youtubes: [],\n  tiktoks: [],\n  pinterests: [],\n  discords: [],\n  referrerUrl: null,\n  url: null,\n  domain: null,\n  originalStartUrl: null\n};\n\n// Process each item from the input\ninputData.forEach(item => {\n  const { \n    depth, \n    referrerUrl, \n    url, \n    domain, \n    emails = [], \n    phones = [], \n    phonesUncertain = [], \n    linkedIns = [], \n    twitters = [], \n    instagrams = [], \n    facebooks = [], \n    youtubes = [], \n    tiktoks = [], \n    pinterests = [], \n    discords = [], \n    originalStartUrl \n  } = item.json;\n\n  // Aggregate array fields (avoid duplicates)\n  const arrayFields = [\n    'emails', 'phones', 'phonesUncertain', 'linkedIns', \n    'twitters', 'instagrams', 'facebooks', 'youtubes', \n    'tiktoks', 'pinterests', 'discords'\n  ];\n\n  arrayFields.forEach(field => {\n    const fieldData = eval(field);\n    if (Array.isArray(fieldData) && fieldData.length > 0) {\n      fieldData.forEach(value => {\n        if (value && !aggregated[field].includes(value)) {\n          aggregated[field].push(value);\n        }\n      });\n    }\n  });\n\n  // Set single value fields (use first non-null value)\n  const singleFields = ['referrerUrl', 'url', 'domain', 'originalStartUrl'];\n  singleFields.forEach(field => {\n    const fieldValue = eval(field);\n    if (!aggregated[field] && fieldValue) {\n      aggregated[field] = fieldValue;\n    }\n  });\n});\n\n// Create output format that n8n expects\nconst output = [{\n  json: {\n    ...aggregated,\n    // Additional metadata\n    totalItemsProcessed: inputData.length,\n    aggregationTimestamp: new Date().toISOString()\n  }\n}];\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        0
+      ],
+      "id": "a6e0893a-0545-498c-9d16-8362446435d9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/vdrmota~contact-info-scraper/run-sync-get-dataset-items?token=",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"considerChildFrames\": true,\n    \"maxDepth\": 5,\n    \"maxRequests\": 9999999,\n    \"maxRequestsPerStartUrl\": 20,\n    \"sameDomain\": true,\n    \"startUrls\": [\n        {\n            \"url\": \"{{ $('Prepare Lead Data').item.json[\"Company Website\"] }}\",\n            \"method\": \"GET\"\n        }\n    ],\n    \"useBrowser\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3f7e7a46-c880-408e-a799-6db347687bd9",
+      "name": "Company Data Scraping",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"queries\": [\n        \"{{ $json.linkedIns[0] }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        0
+      ],
+      "id": "3000ed6c-624d-41ba-8965-3eb83b253a68",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/supreme_coder~linkedin-post/run-sync-get-dataset-items?token=",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"deepScrape\": true,\n    \"limitPerSource\": 1,\n    \"rawData\": true,\n    \"urls\": [\n        \"{{ $('LinkedIn Company Data').item.json.linkedIns[0] }}\"\n    ]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        0
+      ],
+      "id": "577e4942-00a4-4182-80ea-8ccadc7725a8",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5c979280-31f2-43b6-8291-bc2f98694a8d",
+              "leftValue": "={{ $json.linkedIns }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "lengthGt",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        540,
+        0
+      ],
+      "id": "598ca9ec-8712-4e3e-955b-249c77237d13",
+      "name": "LinkedIn Company Data"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Prepare Lead Data').item.json[\"Company Website\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        20
+      ],
+      "id": "105ec36e-a31a-44d2-aba8-12ef006b8516",
+      "name": "HTTP Request3",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1240,
+        180
+      ],
+      "id": "089d6f87-0713-4755-8b47-493ca51536cb",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "O3-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert web intelligence analyst. I will give you raw HTTP response data (HTML + metadata) of a website.\nYour job is to extract and summarize the business purpose of this website using only the raw content provided — no guessing or assumptions.\n\nOutput your response in this exact format with 7 labeled fields:\n\n1. Brand Name:\n2. Tagline / Headline:\n3. Business Category:\n4. Key Offerings / Services:\n5. Value Proposition:\n6. Target Audience:\n7. Call-To-Actions (CTAs):\nOnly use information that is visibly or semantically present in the raw data. If a field is not found, write: “Not explicitly mentioned.”",
+              "role": "system"
+            },
+            {
+              "content": "=Here is the raw http data :\n {{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        220
+      ],
+      "id": "c0a986cb-9243-4ca1-8d29-ef4f95df7ca9",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const company_data = $input.all();\n\nreturn {\n  company_data:company_data\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        200
+      ],
+      "id": "7ec02c34-5daa-4058-a067-810f3875277c",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": " Task\nTransform raw company data into a clean, structured company profile in **human-readable plain text format** for enhanced readability and professional presentation.\n Required Output Format\n\nThe output should be formatted as a comprehensive plain text document with clear sections and proper formatting:\n\n COMPANY OVERVIEW\nCompany Name: [Extract from name field]\nTagline: [Extract from tagline field]\nIndustry: [Extract from industries array]\nCompany Type: [Extract from companyType field]\nFounded: [Extract from foundedOn.year field]\nEmployee Count: [Extract from employeeCount and employeeCountRange]\nHeadquarters: [Extract from locations array - headquarter location]\nWebsite: [Extract from website field]\nLinkedIn Profile: [Extract from linkedinUrl field]\n\n CONTACT INFORMATION\nPrimary Email: [Extract from emails array]\nPhone Numbers: [Extract from phones array, note if uncertain]\nPhysical Address: [Extract complete address from locations - format as multi-line address]\n\nDIGITAL PRESENCE\nLinkedIn: [Extract from linkedIns array] (Status: Active/Inactive)\nTwitter: [Extract from twitters array] (Status: Active/Inactive)\nInstagram: [Extract from instagrams array] (Status: Active/Inactive)\nFacebook: [Extract from facebooks array] (Status: Active/Inactive)\nYouTube: [Extract from youtubes array] (Status: Active/Inactive)\nOther Platforms: [List any other social media platforms found]\n\n RECENT ACTIVITY & ENGAGEMENT\nLatest LinkedIn Post:\n  Date: [Extract from postedAtISO, convert to readable format]\n  Engagement Metrics:\n    - Likes: [Extract likes]\n    - Comments: [Extract comments]\n    - Shares: [Extract shares]\n    - Impressions: [Extract impressions]\n  Content Summary: [Summarize the post text in 1-2 sentences]\n  Post Type: [Extract from type field]\n  Post URL: [Extract post URL]\n\nSocial Media Metrics:\n  LinkedIn Followers: [Extract from followerCount]\n  Average Engagement Rate: [Calculate: (likes + comments + shares) / followers * 100]%\n  Content Reach: [Extract impression data if available]\n\n COMPANY DETAILS\nDescription: [Extract from description field - format as readable paragraph]\n\nSpecialties: [Extract from specialities array and format as list]\n- [Specialty 1]\n- [Specialty 2]\n- [Specialty 3]\n\n LOCATIONS\nHeadquarters: [Primary location with full address]\n\nAdditional Offices:\n- [Location 2: Address]\n- [Location 3: Address]\n\n ADDITIONAL INSIGHTS\nTechnology Stack: [If mentioned in posts or descriptions, extract and list]\n\nRecent Developments:\n- [Key developments from recent posts]\n- [Notable company updates]\n- [Partnership announcements]\n\nKey Personnel Interactions: [Extract any notable reactions/comments from company posts]\nContent Strategy: [Analyze posting patterns and content themes]\nVisual Identity: [Note if logo and branding assets are available]\n\nContact Recommendations:\nBest Contact Method: [Recommend based on available data]\nOptimal Outreach Time: [Based on posting patterns if available]\n\n Data Processing Instructions\n\n1. **Plain Text Formatting Standards**\n- Use clear section headers with proper spacing\n- Use consistent indentation for sub-items (2-4 spaces)\n- Apply CAPITAL LETTERS for main section headers\n- Use clear labeling for all field names\n- Maintain consistent spacing between sections\n- Use dashes (-) for list items\n\n 2. **Content Enhancement**\n- Convert timestamps to human-readable format (e.g., \"March 15, 2024\")\n- Present URLs as complete, accessible links\n- Calculate engagement rates and provide percentage values\n- Indicate social media activity status clearly\n- Format addresses with proper line breaks\n\n3. **Missing Data Handling**\nUse \"Not Available\" or \"N/A\" for missing required information\n\n 4. **Quality Assurance**\n- Ensure consistent formatting throughout\n- Maintain proper spacing and alignment\n- Check that all information is clearly labeled\n- Use consistent terminology\n- Apply proper line breaks for readability\n\n Output Template Structure\n\nCOMPANY PROFILE\n===============================================================================\n\nCompany Name: [Company Name]\nTagline: [Tagline]\n\nQUICK FACTS\n-----------\nIndustry: [Industry]\nCompany Size: [Employee count]\nFounded: [Year]\nHeadquarters: [Location]\n\nDETAILED INFORMATION\n===================\n\n[Continue with all sections as outlined above using plain text formatting]\n\nEXECUTIVE SUMMARY\n================\n[2-3 sentence executive summary of the company based on all gathered data]\n\nREPORT METADATA\n==============\nLast Updated: [Current date]\nData Source: [Note source of information]\n\n Special Instructions\n\n Error Handling\nIf data extraction encounters errors, clearly note:\n\"Data Limitation: [Specific field] information could not be retrieved\"\n\n Engagement Calculations\n- Engagement Rate: (Likes + Comments + Shares) / Followers × 100\n- Reach Rate: Impressions / Followers × 100\n- Format as percentages with 2 decimal places\n\nContent Analysis Keywords\nWhen analyzing posts, look for and highlight:\n- Industry keywords\n- Company values\n- Product/service mentions\n- Partnership announcements\n- Hiring indicators\n- Growth signals\n\n Final Output Standards\n\nThe final plain text document should be:\n- Professional - Business-ready formatting without markup\n- Comprehensive - All available data included\n- Readable - Clear structure and clean typography\n- Actionable - Useful for business decisions\n- Consistent - Uniform formatting throughout\n- Accessible - Easy to scan and reference in any text editor\n\nThis enhanced prompt ensures your company data is transformed into a polished, professional plain text document suitable for reports, CRM systems, or any text-based application.",
+              "role": "system"
+            },
+            {
+              "content": "=Here is the company data to analyze :\n\n{{ $json.company_data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1860,
+        200
+      ],
+      "id": "8084c358-ea88-450c-b34b-55ce34bae309",
+      "name": "OpenAI1",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ea25180-7229-4af1-a75b-0ffbfad2be7e",
+              "name": "company_data",
+              "value": "={{ $json.company_data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1640,
+        200
+      ],
+      "id": "09d5c288-bc06-43f4-ba45-7818556637e2",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "013b014f-b019-4ac9-a5af-9366ffef74a5",
+              "name": "final_company_data",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        200
+      ],
+      "id": "9404cdc4-025d-4c58-b0e1-1e03a9366f0d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mode: Run Once For All Items\nconst lead = $('Prepare Lead Data').first().json;\nconst finalCData = $input.first().json.final_company_data;\n\nconst fullName         = lead['Full Name'];\nconst email            = lead.Email;\nconst company          = lead.Company;\nconst jobTitle         = lead['Job Title'];\nconst companyWebsite   = lead['Company Website'];\nconst painPoints       = lead['Pain Points / Challenges'];\nconst leadSource       = lead['Lead Source'];\nconst submittedAt      = lead.submittedAt;\nconst formMode         = lead.formMode;\nconst leadId           = lead.leadId;\nconst timestamp        = lead.timestamp;\n\nreturn {\n  json: {\n    final_company_data: finalCData,\n    fullName,\n    email,\n    company,\n    jobTitle,\n    companyWebsite,\n    painPoints,\n    leadSource,\n    submittedAt,\n    formMode,\n    leadId,\n    timestamp,\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        200
+      ],
+      "id": "f5b94005-2c03-4068-9923-9e2c274cc5a4",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code2').item.json.email }}",
+        "subject": "={{ $('Email Sequence Generator').item.json.output.email_sequence[0].subject_lines[\n   Math.floor(Math.random()*$('Email Sequence Generator').item.json.output.email_sequence[0].subject_lines.length)\n] }}\n",
+        "message": "={{ $json.message.content }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4020,
+        200
+      ],
+      "id": "3cddc342-4a5c-4752-9a95-a7b5daad1ed3",
+      "name": "Gmail",
+      "webhookId": "85596bc4-e3fc-4e13-885c-4e00c9705132",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert this raw JSON email content into clean HTML email code:\nRaw Content:\n{{ $json.output.email_sequence[0].content }}\nOutput Requirements:\n\nClean HTML only - no code blocks, no explanations, no extra text\nProfessional styling with inline CSS\nModern color scheme using blues/oranges as primary colors\nProper formatting with bold/italic where appropriate\nMobile-responsive table-based layout\nEmail-safe fonts (Arial, Helvetica, sans-serif)\nProfessional buttons with proper styling and spacing\n\nImportant: Your response must contain ONLY the HTML code that can be directly copied and used in an email system. Do not include any markdown formatting or explanatory text."
+            },
+            {
+              "content": "You are a professional email HTML converter. Your job is to transform raw JSON email content into clean, properly formatted HTML emails that work across all email clients.\nCRITICAL INSTRUCTIONS:\n\nOutput ONLY the HTML code - no explanations, no markdown code blocks, no additional text\nDo not start with html or end with \nDo not include any commentary or explanations after the HTML\nThe response should be pure HTML that can be directly used in email systems\n\nHTML Requirements:\n\nUse table-based layouts for email client compatibility\nApply ALL CSS inline using style attributes\nUse email-safe fonts: Arial, Helvetica, sans-serif\nEnsure mobile responsiveness with proper viewport meta tags\nUse semantic HTML elements where appropriate\n\nColor Scheme Guidelines:\n\nPrimary colors: Use professional blues (#2563eb, #1d4ed8) or oranges (#f97316, #ea580c)\nAccent colors: Complementary greens (#16a34a, #15803d) for buttons/highlights\nText colors: Dark grays (#374151, #6b7280) for body text\nBackgrounds: Clean whites (#ffffff) and light grays (#f9fafb)\nAvoid bright/neon colors that look unprofessional\n\nButton Styling:\n\nUse rounded corners (border-radius: 6px)\nProper padding (12px 24px)\nClear hover states\nProfessional color combinations",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        3420,
+        200
+      ],
+      "id": "dd1aac33-3fb3-4482-b4c0-bccd70b1369f",
+      "name": "Email Content Preparation",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json.fullName }}",
+            "Lead Reply Status": "Awaiting",
+            "Latest Email Thread ID": "={{ $('Gmail').item.json.threadId }}",
+            "1st Email Content": "={{ $('Email Sequence Generator').item.json.output.email_sequence[0].content }}",
+            "1st Email CTA": "={{ $('Email Sequence Generator').item.json.output.email_sequence[0].call_to_action }}",
+            "1st Email Psychological Trigger": "={{ $('Email Sequence Generator').item.json.output.email_sequence[0].psychological_trigger }}",
+            "2nd Email Content": "={{ $('Email Sequence Generator').item.json.output.email_sequence[1].content }}",
+            "2nd Email CTA": "={{ $('Email Sequence Generator').item.json.output.email_sequence[1].call_to_action }}",
+            "2nd Email  Psychological Trigger": "={{ $('Email Sequence Generator').item.json.output.email_sequence[1].psychological_trigger }}",
+            "3rd Email Content": "={{ $('Email Sequence Generator').item.json.output.email_sequence[2].content }}",
+            "3rd Email CTA": "={{ $('Email Sequence Generator').item.json.output.email_sequence[2].call_to_action }}",
+            "3rd Email  Psychological Trigger": "={{ $('Email Sequence Generator').item.json.output.email_sequence[2].psychological_trigger }}",
+            "3rd Email Subject Lines Array": "=Variation 1 : {{ $('Email Sequence Generator').item.json.output.email_sequence[2].subject_lines[0] }}\nVariation 2 : {{ $('Email Sequence Generator').item.json.output.email_sequence[2].subject_lines[1] }}\nVariation 3 : {{ $('Email Sequence Generator').item.json.output.email_sequence[2].subject_lines[2] }}",
+            "2nd Email Subject Lines Array": "=Variation 1 : {{ $('Email Sequence Generator').item.json.output.email_sequence[1].subject_lines[0] }}\nVariation 2 : {{ $('Email Sequence Generator').item.json.output.email_sequence[1].subject_lines[1] }}\nVariation 3 : {{ $('Email Sequence Generator').item.json.output.email_sequence[1].subject_lines[2] }}",
+            "1st Email Subject Lines Array": "=Variation 1 : {{ $('Email Sequence Generator').item.json.output.email_sequence[0].subject_lines[0] }}\nVariation 2 : {{ $('Email Sequence Generator').item.json.output.email_sequence[0].subject_lines[1] }}\nVariation 3 : {{ $('Email Sequence Generator').item.json.output.email_sequence[0].subject_lines[2] }}",
+            "Lead Company Research": "={{ $('Code2').item.json.final_company_data }}",
+            "Lead ID": "={{ $json.leadId }}",
+            "Email": "={{ $json.email }}",
+            "Company Name": "={{ $json.company }}",
+            "Company Wesbite": "={{ $json.companyWebsite }}",
+            "Pain Points": "={{ $json.painPoints }}",
+            "Lead Source": "={{ $json.leadSource }}",
+            "Stage": 1
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company Website URL",
+              "displayName": "Company Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Company Research",
+              "displayName": "Lead Company Research",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "1st Email Subject Lines Array",
+              "displayName": "1st Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "1st Email Content",
+              "displayName": "1st Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "1st Email CTA",
+              "displayName": "1st Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "1st Email Psychological Trigger",
+              "displayName": "1st Email Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "2nd Email Subject Lines Array",
+              "displayName": "2nd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "2nd Email Content",
+              "displayName": "2nd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "2nd Email CTA",
+              "displayName": "2nd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "2nd Email  Psychological Trigger",
+              "displayName": "2nd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "3rd Email Subject Lines Array",
+              "displayName": "3rd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "3rd Email Content",
+              "displayName": "3rd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "3rd Email CTA",
+              "displayName": "3rd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "3rd Email  Psychological Trigger",
+              "displayName": "3rd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Latest Email Thread ID",
+              "displayName": "Latest Email Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Reply Status",
+              "displayName": "Lead Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Awaiting",
+                  "value": "Awaiting"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stage",
+              "displayName": "Stage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company Wesbite",
+              "displayName": "Company Wesbite",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        4460,
+        200
+      ],
+      "id": "89acaea8-87be-4cd3-a7b2-fd1544afa11f",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mode: Run Once For All Items\nconst lead = $('Prepare Lead Data').first().json;\n\n\nconst fullName         = lead['Full Name'];\nconst email            = lead.Email;\nconst company          = lead.Company;\nconst jobTitle         = lead['Job Title'];\nconst companyWebsite   = lead['Company Website'];\nconst painPoints       = lead['Pain Points / Challenges'];\nconst leadSource       = lead['Lead Source'];\nconst submittedAt      = lead.submittedAt;\nconst formMode         = lead.formMode;\nconst leadId           = lead.leadId;\nconst timestamp        = lead.timestamp;\n\nreturn {\n  json: {\n    fullName,\n    email,\n    company,\n    jobTitle,\n    companyWebsite,\n    painPoints,\n    leadSource,\n    submittedAt,\n    formMode,\n    leadId,\n    timestamp,\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4240,
+        200
+      ],
+      "id": "e9188652-17ab-4286-95e0-26306ccfb3cf",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        760
+      ],
+      "id": "97c1311e-30a7-48ff-ac45-aaa27eaeef2d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RBDrvVGmX3gPDb8n",
+          "name": "Ashwanth Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "filterByFormula": "={Email}=\"{{ $json.messages[0].To }}\"",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -680,
+        760
+      ],
+      "id": "a0f37d82-6d9d-44ff-a692-294fa3c4833b",
+      "name": "Airtable1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "={{ $json.threadId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -900,
+        760
+      ],
+      "id": "0a6a9c8a-81ee-4d02-b39d-c35f318ed162",
+      "name": "Gmail1",
+      "webhookId": "2fa5ecc2-d956-4886-be0b-1e89d9cfd6db",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert this raw JSON email content into clean HTML email code:\nRaw Content:\n{{ $json.message.content.content }}\nOutput Requirements:\n\nClean HTML only - no code blocks, no explanations, no extra text\nProfessional styling with inline CSS\nModern color scheme using blues/oranges as primary colors\nProper formatting with bold/italic where appropriate\nMobile-responsive table-based layout\nEmail-safe fonts (Arial, Helvetica, sans-serif)\nProfessional buttons with proper styling and spacing\n\nImportant: Your response must contain ONLY the HTML code that can be directly copied and used in an email system. Do not include any markdown formatting or explanatory text."
+            },
+            {
+              "content": "You are a professional email HTML converter. Your job is to transform raw JSON email content into clean, properly formatted HTML emails that work across all email clients.\nCRITICAL INSTRUCTIONS:\n\nOutput ONLY the HTML code - no explanations, no markdown code blocks, no additional text\nDo not start with html or end with \nDo not include any commentary or explanations after the HTML\nThe response should be pure HTML that can be directly used in email systems\n\nHTML Requirements:\n\nUse table-based layouts for email client compatibility\nApply ALL CSS inline using style attributes\nUse email-safe fonts: Arial, Helvetica, sans-serif\nEnsure mobile responsiveness with proper viewport meta tags\nUse semantic HTML elements where appropriate\n\nColor Scheme Guidelines:\n\nPrimary colors: Use professional blues (#2563eb, #1d4ed8) or oranges (#f97316, #ea580c)\nAccent colors: Complementary greens (#16a34a, #15803d) for buttons/highlights\nText colors: Dark grays (#374151, #6b7280) for body text\nBackgrounds: Clean whites (#ffffff) and light grays (#f9fafb)\nAvoid bright/neon colors that look unprofessional\n\nButton Styling:\n\nUse rounded corners (border-radius: 6px)\nProper padding (12px 24px)\nClear hover states\nProfessional color combinations",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        520,
+        520
+      ],
+      "id": "940aad9e-6c6d-48e3-a632-f3034c391869",
+      "name": "Email Content Preparation1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0ebc2079-44d5-4294-8b42-ab5b973f0f11",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        760
+      ],
+      "id": "7279d7fa-2fbb-4d04-a7c6-12e1b23a078b",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        920
+      ],
+      "id": "d7922f1a-8611-46dd-866c-883f572aa936",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "O3-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert AI Sales Development Representative (SDR) assistant. Your task is to analyze incoming lead replies, perform comprehensive sentiment and intent analysis, and generate a personalized email response using the provided template as a foundation.\nYour Process:\n\nANALYZE the lead's reply for sentiment, intent, objections, buying signals, and key information\nEVALUATE the provided template and determine how to personalize it based on the reply\nGENERATE a personalized email that addresses their specific response while maintaining the template's core structure and objectives\n\nAnalysis Framework:\n\nSentiment Analysis: Determine overall sentiment (positive/neutral/negative), engagement level, urgency, and decision-making readiness\nIntent Classification: Identify primary intent (meeting request, pricing inquiry, objection, positive response, etc.)\nInformation Extraction: Extract pain points, budget indicators, timeline, decision makers, competitors, requirements\nPersonalization Opportunities: Identify specific details from their reply to reference and build upon\n\nEmail Generation Guidelines:\n\nUse the provided template as your foundation but adapt it significantly based on their reply\nReference specific points from their response in a natural way\nAdjust tone to match their communication style\nAddress any objections or concerns they raised\nInclude relevant personalization using lead context\nMaintain the template's core call-to-action but modify approach if needed\nKeep email concise and focused on their specific interests/concerns\n\nOutput Format:\nProvide only the personalized email with the subject line. Do not include an analysis explanation unless specifically requested.\n\n{\nsubject:\"\"\ncontent:\"\"\nCTA:\"\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=LEAD CONTEXT:\n\nName: {{ $('Airtable1').item.json['Full Name'] }}\nCompany: {{ $('Airtable1').item.json['Company Name'] }}\nCurrent Stage: {{ $('Airtable1').item.json.Stage }}\nLead Source: {{ $('Airtable1').item.json['Lead Source'] }}\n\nInitial Email Content : \n{{ $('If').item.json['1st Email Content'] }}\n\nLEAD'S LATEST REPLY:\n{{ $('Gmail Trigger').item.json.snippet }}\n\nTEMPLATE TO PERSONALIZE:\nSubject: {{ $json['2nd Email Subject Lines Array'] }}\nBody: {{ $json['2nd Email Content'] }}\n\nINSTRUCTIONS:\nAnalyze the lead's reply for sentiment, intent, and key information. Then personalize the provided template to directly address their response while maintaining the template's core objectives. Reference specific points from their reply and adapt the tone/approach accordingly.\nOUTPUT:\nProvide the personalized email with subject line ready to send."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        520
+      ],
+      "id": "38bd6120-4eca-44f7-b98e-8a5e9583a91e",
+      "name": "OpenAI2",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Stage }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "c3301fce-2398-46c8-966c-2200aaa0859a"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "eb367152-f262-4dbf-abaf-9d9791041444",
+                    "leftValue": "={{ $json.Stage }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -260,
+        620
+      ],
+      "id": "9fc5fd58-55f6-4dfc-850e-d6f29ccb5a45",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Gmail1').item.json.messages[1].threadId }}",
+        "messageId": "={{ $('Gmail1').item.json.messages[1].id }}",
+        "emailType": "html",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        520
+      ],
+      "id": "c4ab1144-3d15-4c2f-af4f-60a22a5e8596",
+      "name": "Gmail2",
+      "webhookId": "a282b6c9-0361-46ff-90fe-4d78e30f1dce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Airtable1').item.json.id }}",
+            "Stage": 2,
+            "2nd Email Content": "={{ $('OpenAI2').item.json.message.content.content }}",
+            "Lead Reply Status": "Replied"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Website URL",
+              "displayName": "Company Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Company Research",
+              "displayName": "Lead Company Research",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Subject Lines Array",
+              "displayName": "1st Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Content",
+              "displayName": "1st Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email CTA",
+              "displayName": "1st Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Psychological Trigger",
+              "displayName": "1st Email Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Subject Lines Array",
+              "displayName": "2nd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Content",
+              "displayName": "2nd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "2nd Email CTA",
+              "displayName": "2nd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email  Psychological Trigger",
+              "displayName": "2nd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Subject Lines Array",
+              "displayName": "3rd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Content",
+              "displayName": "3rd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email CTA",
+              "displayName": "3rd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email  Psychological Trigger",
+              "displayName": "3rd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Latest Email Thread ID",
+              "displayName": "Latest Email Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Reply Status",
+              "displayName": "Lead Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Awaiting",
+                  "value": "Awaiting"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stage",
+              "displayName": "Stage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company Wesbite",
+              "displayName": "Company Wesbite",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        520
+      ],
+      "id": "e180f416-ea85-43e5-98df-d3d3201b8067",
+      "name": "Airtable2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert this raw JSON email content into clean HTML email code:\nRaw Content:\n{{ $json.message.content.content }}\nOutput Requirements:\n\nClean HTML only - no code blocks, no explanations, no extra text\nProfessional styling with inline CSS\nModern color scheme using blues/oranges as primary colors\nProper formatting with bold/italic where appropriate\nMobile-responsive table-based layout\nEmail-safe fonts (Arial, Helvetica, sans-serif)\nProfessional buttons with proper styling and spacing\n\nImportant: Your response must contain ONLY the HTML code that can be directly copied and used in an email system. Do not include any markdown formatting or explanatory text."
+            },
+            {
+              "content": "You are a professional email HTML converter. Your job is to transform raw JSON email content into clean, properly formatted HTML emails that work across all email clients.\nCRITICAL INSTRUCTIONS:\n\nOutput ONLY the HTML code - no explanations, no markdown code blocks, no additional text\nDo not start with html or end with \nDo not include any commentary or explanations after the HTML\nThe response should be pure HTML that can be directly used in email systems\n\nHTML Requirements:\n\nUse table-based layouts for email client compatibility\nApply ALL CSS inline using style attributes\nUse email-safe fonts: Arial, Helvetica, sans-serif\nEnsure mobile responsiveness with proper viewport meta tags\nUse semantic HTML elements where appropriate\n\nColor Scheme Guidelines:\n\nPrimary colors: Use professional blues (#2563eb, #1d4ed8) or oranges (#f97316, #ea580c)\nAccent colors: Complementary greens (#16a34a, #15803d) for buttons/highlights\nText colors: Dark grays (#374151, #6b7280) for body text\nBackgrounds: Clean whites (#ffffff) and light grays (#f9fafb)\nAvoid bright/neon colors that look unprofessional\n\nButton Styling:\n\nUse rounded corners (border-radius: 6px)\nProper padding (12px 24px)\nClear hover states\nProfessional color combinations",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        500,
+        760
+      ],
+      "id": "fa07c272-d483-4c8c-8fea-4a5bde67bc5e",
+      "name": "Email Content Preparation2",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "O3-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert AI Sales Development Representative (SDR) assistant. Your task is to analyze incoming lead replies, perform comprehensive sentiment and intent analysis, and generate a personalized email response using the provided template as a foundation.\nYour Process:\n\nANALYZE the lead's reply for sentiment, intent, objections, buying signals, and key information\nEVALUATE the provided template and determine how to personalize it based on the reply\nGENERATE a personalized email that addresses their specific response while maintaining the template's core structure and objectives\n\nAnalysis Framework:\n\nSentiment Analysis: Determine overall sentiment (positive/neutral/negative), engagement level, urgency, and decision-making readiness\nIntent Classification: Identify primary intent (meeting request, pricing inquiry, objection, positive response, etc.)\nInformation Extraction: Extract pain points, budget indicators, timeline, decision makers, competitors, requirements\nPersonalization Opportunities: Identify specific details from their reply to reference and build upon\n\nEmail Generation Guidelines:\n\nUse the provided template as your foundation but adapt it significantly based on their reply\nReference specific points from their response in a natural way\nAdjust tone to match their communication style\nAddress any objections or concerns they raised\nInclude relevant personalization using lead context\nMaintain the template's core call-to-action but modify approach if needed\nKeep email concise and focused on their specific interests/concerns\n\nOutput Format:\nProvide only the personalized email with the subject line. Do not include an analysis explanation unless specifically requested.\n\n{\nsubject:\"\"\ncontent:\"\"\nCTA:\"\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=LEAD CONTEXT:\n\nName: {{ $('Airtable1').item.json['Full Name'] }}\nCompany: {{ $('Airtable1').item.json['Company Name'] }}\nCurrent Stage: {{ $('Airtable1').item.json.Stage }}\nLead Source: {{ $('Airtable1').item.json['Lead Source'] }}\n\nInitial Email Content : \n{{ $('If').item.json['1st Email Content'] }}\n\nLEAD'S LATEST REPLY:\n{{ $('Gmail Trigger').item.json.snippet }}\n\nTEMPLATE TO PERSONALIZE:\nSubject: {{ $json['3nd Email Subject Lines Array'] }}\nBody: {{ $json['3nd Email Content'] }}\n\nINSTRUCTIONS:\nAnalyze the lead's reply for sentiment, intent, and key information. Then personalize the provided template to directly address their response while maintaining the template's core objectives. Reference specific points from their reply and adapt the tone/approach accordingly.\nOUTPUT:\nProvide the personalized email with subject line ready to send."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        760
+      ],
+      "id": "d52fc720-9a19-4c9e-9fc0-e06080087e20",
+      "name": "OpenAI3",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Gmail1').item.json.messages[1].threadId }}",
+        "messageId": "={{ $('Gmail1').item.json.messages[1].id }}",
+        "emailType": "html",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1140,
+        760
+      ],
+      "id": "56f219e1-c64a-4a19-a963-ac87c113a74a",
+      "name": "Gmail3",
+      "webhookId": "a282b6c9-0361-46ff-90fe-4d78e30f1dce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Airtable1').item.json.id }}",
+            "Stage": 3,
+            "Lead Reply Status": "Replied",
+            "3rd Email Content": "={{ $('OpenAI3').item.json.message.content.content }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Website URL",
+              "displayName": "Company Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Company Research",
+              "displayName": "Lead Company Research",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Subject Lines Array",
+              "displayName": "1st Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Content",
+              "displayName": "1st Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email CTA",
+              "displayName": "1st Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Psychological Trigger",
+              "displayName": "1st Email Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Subject Lines Array",
+              "displayName": "2nd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Content",
+              "displayName": "2nd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email CTA",
+              "displayName": "2nd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email  Psychological Trigger",
+              "displayName": "2nd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Subject Lines Array",
+              "displayName": "3rd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Content",
+              "displayName": "3rd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "3rd Email CTA",
+              "displayName": "3rd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email  Psychological Trigger",
+              "displayName": "3rd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Latest Email Thread ID",
+              "displayName": "Latest Email Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Reply Status",
+              "displayName": "Lead Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Awaiting",
+                  "value": "Awaiting"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stage",
+              "displayName": "Stage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company Wesbite",
+              "displayName": "Company Wesbite",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        760
+      ],
+      "id": "8c774c82-5eb0-4fa0-ac9a-9821ff60a223",
+      "name": "Airtable3",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1140,
+        1340
+      ],
+      "id": "08c5bd6f-aace-490f-bcb0-ac47f9f93da5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "filterByFormula": "{Lead Reply Status}!=\"Replied\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -920,
+        1340
+      ],
+      "id": "afa7e335-137e-4c19-9ca8-2249cb6a9d23",
+      "name": "Airtable4",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Stage }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "d003e59d-898f-4f5f-aa09-d12ad720ed4a"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ac3d0c89-3ec8-4f2c-a573-10b0912894e3",
+                    "leftValue": "={{ $json.Stage }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -260,
+        1240
+      ],
+      "id": "0ae5a8bd-eb25-4df9-a65c-cebfea37fb22",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Airtable4').item.json.Email }}",
+        "subject": "={{ $('OpenAI4').item.json.message.content.subject_line_2 }}",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        1140
+      ],
+      "id": "b014c0bf-6d5e-47c1-bf8e-5a9ba24dd43c",
+      "name": "Gmail4",
+      "webhookId": "7b04abf2-c6d5-4dc2-adaa-6c6e4db3ddb4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert this raw JSON email content into clean HTML email code:\nRaw Content:\n\n{{ $('Switch1').item.json['2nd Email Content'] }}\nOutput Requirements:\n\nClean HTML only - no code blocks, no explanations, no extra text\nProfessional styling with inline CSS\nModern color scheme using blues/oranges as primary colors\nProper formatting with bold/italic where appropriate\nMobile-responsive table-based layout\nEmail-safe fonts (Arial, Helvetica, sans-serif)\nProfessional buttons with proper styling and spacing\n\nImportant: Your response must contain ONLY the HTML code that can be directly copied and used in an email system. Do not include any markdown formatting or explanatory text."
+            },
+            {
+              "content": "You are a professional email HTML converter. Your job is to transform raw JSON email content into clean, properly formatted HTML emails that work across all email clients.\nCRITICAL INSTRUCTIONS:\n\nOutput ONLY the HTML code - no explanations, no markdown code blocks, no additional text\nDo not start with html or end with \nDo not include any commentary or explanations after the HTML\nThe response should be pure HTML that can be directly used in email systems\n\nHTML Requirements:\n\nUse table-based layouts for email client compatibility\nApply ALL CSS inline using style attributes\nUse email-safe fonts: Arial, Helvetica, sans-serif\nEnsure mobile responsiveness with proper viewport meta tags\nUse semantic HTML elements where appropriate\n\nColor Scheme Guidelines:\n\nPrimary colors: Use professional blues (#2563eb, #1d4ed8) or oranges (#f97316, #ea580c)\nAccent colors: Complementary greens (#16a34a, #15803d) for buttons/highlights\nText colors: Dark grays (#374151, #6b7280) for body text\nBackgrounds: Clean whites (#ffffff) and light grays (#f9fafb)\nAvoid bright/neon colors that look unprofessional\n\nButton Styling:\n\nUse rounded corners (border-radius: 6px)\nProper padding (12px 24px)\nClear hover states\nProfessional color combinations",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        500,
+        1140
+      ],
+      "id": "181b9f46-cfa8-4ab9-8cec-b07db1fcff33",
+      "name": "Email Content Preparation3",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Name: {{ $json['Full Name'] }}\n\nLead Company Details: \n{{ $json['Lead Company Research'] }}\n\nLead 1st Email Content: \n{{ $json['1st Email Content'] }}\n\nLead 2nd Email Subject Variations: \n{{ $json['2nd Email Subject Lines Array'] }}\n\n"
+            },
+            {
+              "content": "You're an expert who can choose a random subject line from the given three variations for the given below lead information.\n\nOutput Format :\n{subject_line_2:\"value\"}",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        1140
+      ],
+      "id": "15f89ca5-ac63-43d2-a1c9-56ece27275b7",
+      "name": "OpenAI4",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input items\nconst items = $input.all();\n\n// Process each item and add the condition check\nreturn items.map(item => {\n  // Parse the date string in M/D/YYYY format\n  const lastEmailDateString = item.json['Last Email Sent']; // e.g., \"6/14/2025\"\n  const lastEmail = new Date(lastEmailDateString);\n  const today = new Date();\n  \n  // Set both dates to midnight for accurate day comparison\n  lastEmail.setHours(0, 0, 0, 0);\n  today.setHours(0, 0, 0, 0);\n  \n  const diffDays = Math.floor((today - lastEmail) / (1000 * 60 * 60 * 24));\n  const isFourDaysOrMore = diffDays >= 4;\n  \n  return {\n    json: {\n      ...item.json,\n      shouldSendEmail: isFourDaysOrMore,\n      daysSinceLastEmail: diffDays,\n      lastEmailDate: lastEmailDateString,\n      todayDate: today.toLocaleDateString('en-US')\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -700,
+        1340
+      ],
+      "id": "c478b229-ed00-4fc0-8d3c-51b07c0692c4",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "967b53c2-ed4c-47a3-865d-e174be9bfb27",
+              "leftValue": "={{ $json.shouldSendEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c43f5f7c-4edb-435c-9707-fcc4bd018928",
+              "leftValue": "={{ $json.daysSinceLastEmail }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        1340
+      ],
+      "id": "ba1705d7-58da-490c-9e46-5307b4492838",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        1440
+      ],
+      "id": "2d757122-1714-4de0-be86-730aa19ebf16",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Airtable4').item.json.Email }}",
+        "subject": "={{ $('OpenAI5').item.json.message.content.subject_line_3 }}",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        1320
+      ],
+      "id": "13f11164-0064-42c5-b4b3-9b325a50d725",
+      "name": "Gmail5",
+      "webhookId": "7b04abf2-c6d5-4dc2-adaa-6c6e4db3ddb4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "87oKbbsyLlCbYdHR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert this raw JSON email content into clean HTML email code:\nRaw Content:\n\n{{ $('Switch1').item.json['3rd Email Content'] }}\nOutput Requirements:\n\nClean HTML only - no code blocks, no explanations, no extra text\nProfessional styling with inline CSS\nModern color scheme using blues/oranges as primary colors\nProper formatting with bold/italic where appropriate\nMobile-responsive table-based layout\nEmail-safe fonts (Arial, Helvetica, sans-serif)\nProfessional buttons with proper styling and spacing\n\nImportant: Your response must contain ONLY the HTML code that can be directly copied and used in an email system. Do not include any markdown formatting or explanatory text."
+            },
+            {
+              "content": "You are a professional email HTML converter. Your job is to transform raw JSON email content into clean, properly formatted HTML emails that work across all email clients.\nCRITICAL INSTRUCTIONS:\n\nOutput ONLY the HTML code - no explanations, no markdown code blocks, no additional text\nDo not start with html or end with \nDo not include any commentary or explanations after the HTML\nThe response should be pure HTML that can be directly used in email systems\n\nHTML Requirements:\n\nUse table-based layouts for email client compatibility\nApply ALL CSS inline using style attributes\nUse email-safe fonts: Arial, Helvetica, sans-serif\nEnsure mobile responsiveness with proper viewport meta tags\nUse semantic HTML elements where appropriate\n\nColor Scheme Guidelines:\n\nPrimary colors: Use professional blues (#2563eb, #1d4ed8) or oranges (#f97316, #ea580c)\nAccent colors: Complementary greens (#16a34a, #15803d) for buttons/highlights\nText colors: Dark grays (#374151, #6b7280) for body text\nBackgrounds: Clean whites (#ffffff) and light grays (#f9fafb)\nAvoid bright/neon colors that look unprofessional\n\nButton Styling:\n\nUse rounded corners (border-radius: 6px)\nProper padding (12px 24px)\nClear hover states\nProfessional color combinations",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        500,
+        1320
+      ],
+      "id": "ce8f681c-b8f7-4c06-a399-31a6db757248",
+      "name": "Email Content Preparation4",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Name: {{ $json['Full Name'] }}\n\nLead Company Details: \n{{ $json['Lead Company Research'] }}\n\nLead 1st Email Content: \n{{ $json['1st Email Content'] }}\n\nLead 3rd Email Subject Variations: \n{{ $json['3rd Email Subject Lines Array'] }}\n\n"
+            },
+            {
+              "content": "You're an expert who can choose a random subject line from the given three variations for the given below lead information.\n\nOutput Format :\n{subject_line_3:\"value\"}",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        1320
+      ],
+      "id": "525d6de2-db80-4943-aad2-03ed8a573d1d",
+      "name": "OpenAI5",
+      "credentials": {
+        "openAiApi": {
+          "id": "sKh6glXnpiTVlKQt",
+          "name": "Dev Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Stage": 2,
+            "id": "={{ $('Airtable4').item.json.id }}",
+            "Latest Email Thread ID": "={{ $json.id }}",
+            "Lead Reply Status": "Awaiting"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Website URL",
+              "displayName": "Company Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Company Research",
+              "displayName": "Lead Company Research",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Subject Lines Array",
+              "displayName": "1st Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Content",
+              "displayName": "1st Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email CTA",
+              "displayName": "1st Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Psychological Trigger",
+              "displayName": "1st Email Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Content",
+              "displayName": "2nd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email CTA",
+              "displayName": "2nd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email  Psychological Trigger",
+              "displayName": "2nd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Content",
+              "displayName": "3rd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email CTA",
+              "displayName": "3rd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email  Psychological Trigger",
+              "displayName": "3rd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Latest Email Thread ID",
+              "displayName": "Latest Email Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Reply Status",
+              "displayName": "Lead Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Awaiting",
+                  "value": "Awaiting"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stage",
+              "displayName": "Stage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company Wesbite",
+              "displayName": "Company Wesbite",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Subject Lines Array",
+              "displayName": "2nd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Subject Lines Array",
+              "displayName": "3rd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        1140
+      ],
+      "id": "2c6f1bc6-315e-40eb-9533-04a9aaa9b7b3",
+      "name": "Airtable5",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appFdgcEFubBVqEuX",
+          "mode": "list",
+          "cachedResultName": "AI SDR",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvizVpEvknwdzrW",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appFdgcEFubBVqEuX/tblvizVpEvknwdzrW"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Stage": 3,
+            "id": "={{ $('Airtable4').item.json.id }}",
+            "Latest Email Thread ID": "={{ $json.id }}",
+            "Lead Reply Status": "Awaiting"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Company Website URL",
+              "displayName": "Company Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Company Research",
+              "displayName": "Lead Company Research",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Subject Lines Array",
+              "displayName": "1st Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Content",
+              "displayName": "1st Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email CTA",
+              "displayName": "1st Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "1st Email Psychological Trigger",
+              "displayName": "1st Email Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Content",
+              "displayName": "2nd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email CTA",
+              "displayName": "2nd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email  Psychological Trigger",
+              "displayName": "2nd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Content",
+              "displayName": "3rd Email Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email CTA",
+              "displayName": "3rd Email CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email  Psychological Trigger",
+              "displayName": "3rd Email  Psychological Trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Latest Email Thread ID",
+              "displayName": "Latest Email Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Reply Status",
+              "displayName": "Lead Reply Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                },
+                {
+                  "name": "Awaiting",
+                  "value": "Awaiting"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Stage",
+              "displayName": "Stage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Email Sent",
+              "displayName": "Last Email Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company Wesbite",
+              "displayName": "Company Wesbite",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "2nd Email Subject Lines Array",
+              "displayName": "2nd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "3rd Email Subject Lines Array",
+              "displayName": "3rd Email Subject Lines Array",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        1320
+      ],
+      "id": "0072bb52-f3da-4e35-a4cf-b1ce661beb8d",
+      "name": "Airtable6",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "iQTVHc2jAIwK4nbL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3800,
+        200
+      ],
+      "id": "f33f355d-ae34-4f90-8c06-5a0451a5dd8b",
+      "name": "Wait",
+      "webhookId": "32bc77fa-b505-451e-bc2b-9373ef5ad1f1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        520
+      ],
+      "id": "9280e238-f65c-49f3-8cc6-fd8f9ceb585c",
+      "name": "Wait1",
+      "webhookId": "b95c990b-0352-41c9-b82e-9ae2632ae441"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        760
+      ],
+      "id": "87f210e1-ad42-416f-9fc1-006caa75ee85",
+      "name": "Wait2",
+      "webhookId": "71c9bede-f43e-44f8-805e-df760f24f8fe"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        1140
+      ],
+      "id": "a66077aa-807f-4c72-b5d9-1370fe0cb277",
+      "name": "Wait3",
+      "webhookId": "31c29a53-507c-471f-bba6-ebdc97784446"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        1320
+      ],
+      "id": "eb542cc2-eed9-4768-b79f-2be49465e180",
+      "name": "Wait4",
+      "webhookId": "7f2b487a-c903-4a11-81d7-658c695830da"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        520
+      ],
+      "id": "11d3c310-7d20-4032-8193-1e9851d8de05",
+      "name": "Wait5",
+      "webhookId": "8972a88b-4111-4fa5-9c69-f38cfb2e3bf1"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        740
+      ],
+      "id": "bbcbd639-b7e2-4272-adb3-6744635c8e77",
+      "name": "Wait6",
+      "webhookId": "6d8f244a-2cda-4ba9-abb8-3c0e44f7e8d2"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        1140
+      ],
+      "id": "3398affe-448a-4227-a8b2-0938032a4823",
+      "name": "Wait7",
+      "webhookId": "6d8f244a-2cda-4ba9-abb8-3c0e44f7e8d2"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        1320
+      ],
+      "id": "34ca518d-ddc9-463e-b4db-23ed20e2ff0b",
+      "name": "Wait8",
+      "webhookId": "6d8f244a-2cda-4ba9-abb8-3c0e44f7e8d2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Lead Capture Form": {
+      "main": [
+        [
+          {
+            "node": "Prepare Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Email Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Verification": {
+      "main": [
+        [
+          {
+            "node": "Email Validation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Validation Check": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Behavior Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Email Sequence Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Analyzer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Lead Behavior Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Email Sequence Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Behavior Analysis Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Lead Behavior Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sequence Generator": {
+      "main": [
+        [
+          {
+            "node": "Email Content Preparation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sequence Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Sequence Generator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Data Scraping": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          },
+          {
+            "node": "LinkedIn Company Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "LinkedIn Company Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Company Data Scraping",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Lead Behavior Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Content Preparation": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Airtable1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI2": {
+      "main": [
+        [
+          {
+            "node": "Email Content Preparation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Content Preparation1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Airtable2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Content Preparation2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI3": {
+      "main": [
+        [
+          {
+            "node": "Email Content Preparation2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail3": {
+      "main": [
+        [
+          {
+            "node": "Airtable3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Airtable4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable4": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Wait7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Content Preparation3": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI4": {
+      "main": [
+        [
+          {
+            "node": "Email Content Preparation3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Content Preparation4": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI5": {
+      "main": [
+        [
+          {
+            "node": "Email Content Preparation4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail4": {
+      "main": [
+        [
+          {
+            "node": "Airtable5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail5": {
+      "main": [
+        [
+          {
+            "node": "Airtable6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Gmail3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Gmail4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Gmail5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "OpenAI2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait6": {
+      "main": [
+        [
+          {
+            "node": "OpenAI3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait7": {
+      "main": [
+        [
+          {
+            "node": "OpenAI4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait8": {
+      "main": [
+        [
+          {
+            "node": "OpenAI5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "077a9623-1714-469a-a05e-9beec71c500b",
+  "meta": {
+    "instanceId": "ff3823aeb1dd592aa71eb8af96615f01af25e12826f45d2c3e771d17c05cebb4"
+  },
+  "id": "6jLEhlWvrcwr3kbd",
+  "tags": []
+}

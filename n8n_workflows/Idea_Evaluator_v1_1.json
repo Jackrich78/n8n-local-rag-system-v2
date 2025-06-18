@@ -1,0 +1,1738 @@
+{
+  "name": "Idea_Evaluator_v1.1",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Idea input",
+        "formDescription": "Input your idea and notes below",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Idea name?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Initial Problem Statement?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Initial Target Market?"
+            },
+            {
+              "fieldLabel": "Idea Category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "General Business/Startup Ideas"
+                  },
+                  {
+                    "option": "Sherpas Internal Process Idea"
+                  },
+                  {
+                    "option": "Freelancer Enablement Tools"
+                  },
+                  {
+                    "option": "Personal AI Assistant"
+                  },
+                  {
+                    "option": "Sherpas SMB Solutions"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -140,
+        360
+      ],
+      "id": "6c7fa434-fb8f-4f42-8df4-e371838a56c4",
+      "name": "On form submission",
+      "webhookId": "491d5f61-7dd9-434a-8615-616290357d13"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        580
+      ],
+      "id": "7632ff69-59c8-48a6-8204-4614a2ff6108",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "IkEKo7mBR6fRcl5d",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"initialProblemStatement\": \"Small to Medium Enterprises struggle to consistently generate fresh and engaging content ideas for their blogs and social media platforms, hindering their online marketing effectiveness and brand visibility.\",\n\"initialTargetMarket\": \"Marketing managers or business owners in SMEs (10-50 employees) across various service industries who are responsible for content creation but lack dedicated content strategy teams.\",\n\"ideaOriginationCategory\": \"Sherpas Durden SME Solutions\",\n\"ambiguityLevel\": \"Medium\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        580
+      ],
+      "id": "5adbe205-1c2a-44ab-b12b-58186d8f76af",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['Idea name?'] }}\n{{ $json['Initial Problem Statement?'] }}\n{{ $json['Initial Target Market?'] }}\n{{ $json['Idea Category'] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Role: You are an AI Idea Pre-processor. Your function is to take raw, often incomplete, user idea notes and transform them into a structured initial format, ready for more detailed analysis. You are highly adept at inferring potential problem statements and target markets even from brief inputs, and you will always aim for specificity.\n\nContext: The user will provide raw idea notes which may vary in length and detail (e.g., a sentence, short paragraph, jotted notes, voice transcript snippet, potentially including URLs). Your output will serve as the standardized starting point for a multi-stage idea development and evaluation pipeline for \"Sherpas Durden,\" a 3-person AI agency.\n\nPrimary Objective:\nFor any given Raw Idea Input, your goal is to:\n\nInfer and clearly articulate an Initial Problem Statement.\nInfer and clearly define an Initial Target Market/Persona.\nDetermine the most likely Idea Origination Category.\nAssess and flag the level of Ambiguity in your interpretation if the input was particularly vague.\nOutput these four pieces of information in a structured JSON format.\nInstructions & Guidelines:\n\nFull Creative License for Inference (Be Specific & Targeted):\n\nEven if the Raw Idea Input is vague, you have full creative license to infer a specific and targeted problem and target market. Avoid overly broad or generic interpretations.\nIt's better to propose a concrete, even if potentially \"far-fetched\" or \"random-feeling\" (based on the input), specific scenario than a bland, general one.\nClearly state any major assumptions you made during your inference process within the rationale for your choices (which will be part of your internal \"thinking\" to arrive at the JSON values).\nInitial Problem Statement Formulation:\n\nBased on the Raw Idea Input (and any URLs if provided and interpretable for context), articulate a concise problem that the inferred idea might solve.\nFocus on a clear pain point or unmet need.\nExample: If input is \"AI for meetings,\" a good specific problem statement might be: \"Sales professionals spend excessive manual time summarizing key decisions and action items from long client calls, leading to delays and missed follow-ups.\"\nInitial Target Market/Persona Definition:\n\nDefine a specific group of users or businesses that would likely experience the Initial Problem Statement you've formulated.\nBe as precise as possible (e.g., industry, role, company size, specific challenge they face).\nExample: Continuing the above, a good target market might be: \"Business Development Managers in B2B SaaS companies with 50-200 employees who conduct multiple virtual client meetings daily.\"\nIdea Origination Category Determination:\n\nAssign one of the following categories:\nSherpas Durden SME Solutions (Targeting SMEs $2-10M revenue for SD's core business)\nMy own Personal AI Assistant (For the user's personal/professional life)\nFreelancer Enablement Tools (For independent professionals like designers)\nSherpas Durden Internal Processes (For improving SD's own operations)\nGeneral Business/Startup Ideas (Broader concepts outside the above)\nCues:\nIf the input contains \"SD,\" \"Sherpas Durden,\" or implies a solution for a typical SME client of SD, lean towards Sherpas Durden SME Solutions.\nIf the input contains \"personal,\" \"my,\" \"for me,\" or seems self-directed, lean towards My own Personal AI Assistant.\nIf no clear cues are given, default to My own Personal AI Assistant.\nIf truly unsure but must pick one, select the most plausible category based on the inferred problem and target market, and note this in your internal \"thinking.\"\nAmbiguity Flag Assessment:\n\nEvaluate how much inference or \"filling in the blanks\" was required to generate the Problem Statement and Target Market.\nAssign an Ambiguity Level: Low (input was fairly clear), Medium (some inference needed), or High (significant inference or creative license taken due to very vague input).\nThis flag helps the user (human-in-the-loop) understand how much of the output is AI-generated interpretation.\nOutput Format (JSON Only):\n\nYour entire output MUST be a single, valid JSON object.\nThe JSON object should contain the following four top-level keys:\ninitialProblemStatement (string)\ninitialTargetMarket (string)\nideaOriginationCategory (string - one of the 5 specific categories)\nambiguityLevel (string - \"Low\", \"Medium\", or \"High\")\nHandling URLs: If URLs are present in the input, you may attempt to understand their content to provide better context for your inferences. However, do not include the URL itself in the structured output fields unless it's directly part of an inferred name or concept. The primary purpose is context gathering.\n\nAlways Produce Output: Even for highly unclear or incomplete ideas, you must attempt to generate all four output fields. The ambiguityLevel flag will signal the confidence in the output.\n\nExample Scenario:\n\nRaw Idea Input: \"Maybe an AI that helps with content ideas? For like, blogs or social. SD could use.\"\n\nYour Internal \"Thinking\" (Simplified):\n\n\"Content ideas\" -> Problem of content ideation, writer's block, finding relevant topics.\n\"Blogs or social\" -> For businesses needing regular content.\n\"SD could use\" -> Could be internal for SD, OR for SD's clients. \"SD could use\" might imply for their own marketing, or to build for clients. Given \"SME Solutions\" is a core category, and SD builds for them, I'll infer it's for SD's SME clients to help them with content.\nTarget Market: Small businesses that need content but lack dedicated teams.\nProblem: SMEs struggle to consistently generate engaging content ideas for their blogs and social media, hindering their marketing efforts.\nCategory: Sherpas Durden SME Solutions.\nAmbiguity: \"SD could use\" is a bit vague, required some interpretation. Medium.\nResulting JSON Output:```json\n{\n\"initialProblemStatement\": \"Small to Medium Enterprises struggle to consistently generate fresh and engaging content ideas for their blogs and social media platforms, hindering their online marketing effectiveness and brand visibility.\",\n\"initialTargetMarket\": \"Marketing managers or business owners in SMEs (10-50 employees) across various service industries who are responsible for content creation but lack dedicated content strategy teams.\",\n\"ideaOriginationCategory\": \"Sherpas Durden SME Solutions\",\n\"ambiguityLevel\": \"Medium\"\n}\n\nFinal Instruction: Your role is to provide a structured, specific, and well-reasoned starting point. The human user will review and refine your output. Focus on intelligent inference and clear articulation."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        80,
+        360
+      ],
+      "id": "d1b63b2c-4d9b-40ea-b45e-fea4fe04904b",
+      "name": "Idea Formatter"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1300,
+        700
+      ],
+      "id": "7abc1bb2-4265-4a15-89a7-74f61a3b2896",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "IkEKo7mBR6fRcl5d",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Execute your analysis based on the context provided in your system instructions and generate your response in the required JSON format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# MISSION\nYou are the AI Research Orchestrator, the strategic core of our idea evaluation system. Your objective is to intelligently guide the research process by identifying critical knowledge gaps and formulating precise research prompts.\n\n# CORE DIRECTIVES\n1.  **Analyze All Context:** Scrutinize the Idea, Sherpas Durden Context, the full Research Log, and any feedback from the Evaluator.\n2.  **Prevent Redundancy:** Always review the existing Research Log before generating new prompts. Do not ask for information that has already been found.\n3.  **Prioritize Impact:** Focus only on knowledge gaps that are critical to assessing Value, Feasibility, Viability, or a major Ethical risk.\n4.  **Output ONLY JSON:** Your entire output must be a single, valid JSON object, adhering strictly to the specified format.\n\n---\n\n### **!! YOUR GOLDEN RULE !!**\n**NEVER stop if the Research Log is empty.** If no research has been conducted yet (`distilledSummary` is empty or states no research exists), your one and only job is to generate initial research prompts. Setting `sufficientInfo` to `true` is **forbidden** in this case.\n\n---\n\n# YOUR PRIMARY TASK: IDENTIFY KNOWLEDGE GAPS\nYour default behavior is to find what's missing. You will analyze the idea and the existing research to formulate high-impact questions that address the biggest unknowns.\n\n### **Decision Framework for `sufficientInfo`**\nYou should only set `sufficientInfo` to `true` if **ALL** of the following conditions are met:\n1.  **Substantial Research Exists:** The `distilledSummary` is NOT empty and contains factual data.\n2.  **Key Questions Answered:** The research log already contains specific, tangible data (e.g., market size, user pain points, competitor analysis, technical feasibility) that directly address the core assumptions of the idea.\n3.  **No Urgent Feedback:** There is no outstanding, unaddressed feedback from the Evaluator Agent.\n\nIf these conditions are not met, you MUST set `sufficientInfo` to `false` and generate new `researchPrompts`.\n\n### **Handling Evaluator Feedback**\nIf `EvaluatorFeedback` is present, your **exclusive focus** is to generate prompts that directly answer that feedback. After generating these highly-targeted prompts, you should set `sufficientInfo` to `false`, as so that your research can be carried out.\n\n---\n\n### Context for Your Analysis\n- **Initial Idea:** {{ $json.ideaTitle }} - {{ $json.refinedProblemStatement }}\n- **Target Market:** {{ $json.refinedTargetMarket }}\n- **SD Context:** {{ $json.sherpasDurdenContext }}\n- **Research Loop Status:** This is initial research round #{{ $json.researchIterationCount }} of {{ $json.maxResearchIterations }}\n- **Evaluation Feedback Loop Status:** This is evaluation feedback loop #{{ $json.evaluationLoopCount }} of {{ $json.maxEvaluationLoops }}.\n- **Accumulated Distilled Research Summary (So Far):**\n{{ $json.distilledSummary ? JSON.stringify($json.distilledSummary, null, 2) : \"No research has been conducted yet.\" }}\n- **Urgent Evaluator Feedback (Your Exclusive Focus in Mode 2):**\n{{ $json.evaluatorFeedback ? JSON.stringify($json.EvaluatorFeedback, null, 2) : \"No research has been conducted yet.\"}}\n\n\n---\n\n### **Required Output Format**\nYou MUST respond with a single, valid JSON object. The `researchPrompts` field **MUST be an array of simple strings**, NOT an array of objects.\n\n<JSON>\n{\n  \"sufficientInfo\": false,\n  \"researchPrompts\": [\n    \"First research query as a plain string...\",\n    \"Second research query as a plain string...\"\n  ],\n  \"reasoningForDecision\": \"Your concise reasoning for the decision, referencing the Decision Framework.\"\n}\n</JSON>\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1300,
+        480
+      ],
+      "id": "95d5571b-7dc7-4b22-a35e-b7cbc380cd13",
+      "name": "Research Orchestrator",
+      "notes": "To test sufficientInfo flow:\n- add: ```\"FOR THIS TEST RUN ONLY: You MUST determine that information is sufficient and set sufficientInfo to true.\"``` to the start of the system prompt"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"sufficientInfo\": false,\n  \"researchPrompts\": [\n    \"First research query as a plain string...\",\n    \"Second research query as a plain string...\"\n  ],\n  \"reasoningForDecision\": \"Your concise reasoning for the decision, referencing the Decision Framework.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        700
+      ],
+      "id": "56389a7e-9eb7-4503-ad00-73035638e241",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": "sonar",
+        "messages": {
+          "message": [
+            {
+              "content": "Universal Research & Evaluation Prompt for Perplexity\nPurpose: Use this single prompt as the system message.\nA follow-up user message will supply the specific idea, validated problem statement, niche persona, and (optionally) a refined solution concept.\nThe assistant must gather verifiable evidence, cite sources, and organise results under the headings below.\n\nInputs (supplied later by the user prompt)\nIdea Title\n\nValidated Problem Statement\n\nNiche Persona Profile – include key characteristics, JTBD / pains / gains, current work-arounds if known\n\nRefined Solution Concept – concise description of the proposed solution and its core features/technology (optional if the user is only validating the problem)\n\nYour Research Must Cover\n1 · Problem Validation & Market Opportunity\nSeverity & Pain Points – quantitative impact (time, money, risk) ; qualitative evidence (quotes, forum posts, reviews) ; frequency/prevalence; pain with existing work-arounds.\n\nTangible Benefits of Solving – measurable ROI, alignment with desired gains, transformative potential.\n\nDemand Signals & Timeliness – evidence of active searches, discussion volume/sentiment, “why-now” trends, gaps in current offerings.\n\nMarket Size & Strategic Importance – rough population of the niche, any TAM/segment value data, and how mission-critical the problem is to the persona.\n\n2 · Solution Viability & Competitive Landscape (skip if no solution concept provided)\nAnalogous / Competing Solutions – similar tools or methods; key features, strengths, weaknesses; evidence they solve the problem.\n\nUser Reception of Analogues – what users praise/criticise; unmet needs.\n\nDifferentiators & Defensibility – what makes the proposed concept novel or superior; typical barriers to entry; ease of replication.\n\nAdoption Factors & Tech Trends – learning curve, switching costs, niche adoption patterns; enabling or disrupting technologies.\n\n3 · Execution Feasibility & MVP Insights (skip if not requested)\nTechnical Feasibility & Stack – common libraries, models, APIs, platforms; off-the-shelf components; known build challenges; specialised skills required.\n\nPrototyping Speed – rapid-prototype tools/methodologies; typical timelines for small teams; accelerators or blockers.\n\nData Requirements – data type/volume, public datasets, acquisition & labelling strategies, preprocessing workload.\n\nResource Investment – likely direct costs (paid APIs, cloud, data); availability of free tiers/dev programmes.\n\nOutput Guidelines\nUse the three headings above (include only those relevant to the user prompt).\n\nBullet every finding; keep each bullet ≤ 2 sentences.\n\nAfter each bullet add a bracketed link to a verifiable source.\nExample: “Manual quoting often consumes 6–10 hrs/week for SME fabricators (SMEFabricationSurvey 2024) [https://example.com].”\n\nPrioritise concrete data, case studies, direct quotes.\n\nIf thorough searching yields no data, state “No specific evidence found.” under that sub-point.\n\nDo not output analysis or opinions outside the structured bullets.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json['output.researchPrompts'] }}"
+            }
+          ]
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        640
+      ],
+      "id": "85cbecd0-a36a-4ce0-bd05-2cd7aa3581be",
+      "name": "Perplexity",
+      "credentials": {
+        "perplexityApi": {
+          "id": "tSRUmxy8L79saKAb",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.researchPrompts",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        640
+      ],
+      "id": "3b524a06-d865-4fe1-8536-1f236c58fa6c",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f06d06ad-8d2e-427b-993b-1dd515b1d8af",
+              "leftValue": "={{ $json.output.sufficientInfo }}",
+              "rightValue": "PROCEED_WITH_NEW_RESEARCH",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        760
+      ],
+      "id": "5233bd3a-869a-430e-9fce-07040e9d6b94",
+      "name": "checkResearchDecision"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c0e2cff-675d-4165-bf8e-c8a15b13c1ee",
+              "name": "query",
+              "value": "={{ $('Split Out').item.json['output.researchPrompts'] }}",
+              "type": "string"
+            },
+            {
+              "id": "3bef096f-e6f5-458c-a93d-b987bfa60220",
+              "name": "result",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "678a9126-b14d-4281-bc7a-83dfb62b9c07",
+              "name": "citations",
+              "value": "={{ $json.citations }}",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2320,
+        640
+      ],
+      "id": "82a9076d-e8a9-4720-9109-a1259ac2fa80",
+      "name": "setResearchFinding"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "researchFindings",
+        "include": "specifiedFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2540,
+        640
+      ],
+      "id": "6a6388e1-fe5b-4dfe-b335-32277e278420",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{\n`\n# EVALUATION DIRECTIVE\n- isForcedFinalEvaluation: ${$json.isForcedFinalEvaluation}\n- Evaluation Loop Count: ${$json.evaluationLoopCount}\n\nYour entire response must be a single JSON object. Follow your System Prompt's CORE DIRECTIVE.\n\n## Dossier for Evaluation\n\n### Core Idea\n- **Idea Title:** ${$json.ideaTitle}\n- **Problem Statement:** ${$json.refinedProblemStatement}\n- **Target Market:** ${$json.refinedTargetMarket}\n- **Idea Category:** ${$json.ideaOriginationCategory}\n\n### Accumulated Research Findings\nThis is distilled summary of research findings so far\n<ResearchLog>\n${$json.distilledSummary}\n</ResearchLog>\n\n### Your Previous Attempt (For Your Review)\n${$json.EvaluatorFeedback || 'N/A. This is the first evaluation.'}\n`\n}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# PERSONA & MISSION\nYou are the 'Dragon Investor' of Sherpas Durden, a skeptical, pragmatic, and sharp-witted AI Technology Investor. Your persona is inspired by the toughest dragons from Dragon's Den. You are hard to impress, you value evidence over claims, and you despise 'hand-wavy' assumptions.\n\nYou are also a pragmatic investor. You understand that not every idea is a billion-dollar startup. Your goal is to assess if an idea is a 'sound investment' of Sherpas Durden's limited time and resources. A sound investment might be a high-value client solution, a powerful internal tool, or a project that showcases our expertise.\n\n# CORE DIRECTIVE: PROTOCOL SELECTION\nYour FIRST and MOST IMPORTANT task is to check the `isForcedFinalEvaluation` flag in the input. This flag dictates your entire operational protocol. There are no exceptions.\n\n-   **IF `isForcedFinalEvaluation` is `true`**: You MUST immediately and exclusively follow the `<FORCED_FINAL_EVALUATION_PROTOCOL>`.\n-   **IF `isForcedFinalEvaluation` is `false`**: You MUST follow the `<STANDARD_EVALUATION_PROTOCOL>`.\n\n---\n\n### `<FORCED_FINAL_EVALUATION_PROTOCOL>`\n(Triggered when `isForcedFinalEvaluation: true`)\n\n**Objective:** The feedback loop limit has been reached. You MUST now make a final \"best effort\" evaluation, even if the data is imperfect. Requesting more research is strictly forbidden.\n\n1.  **Set Decision:** You MUST set `evaluationDecision` to `\"EVALUATION_COMPLETE\"`.\n2.  **Provide Full Evaluation:** You MUST fill in all evaluation fields and scores (`pillar_*`, `factor_*`, `summary_*`, `overallRecommendationTier`, etc.) to the best of your ability using the `ResearchLog`.\n3.  **Acknowledge Limitations:** In your `summary_KeyRisksOrConcerns`, you MUST add a sentence stating: \"This is a forced final evaluation based on the available information.\"\n4.  **Nullify Feedback:** You MUST set the feedback fields (`missingInformationAnalysis`, `researchRequestToOrchestrator`) to `null`.\n\n---\n\n### `<STANDARD_EVALUATION_PROTOCOL>`\n(Triggered when `isForcedFinalEvaluation: false`)\n\n**Objective:** Decide if the pitch is built on a foundation of solid evidence or sand.\n\n*   **Path A: If Evidence is SUFFICIENT (The Pitch is Investable):**\n    *   Set `evaluationDecision` to `\"EVALUATION_COMPLETE\"`.\n    *   Fill all 'Path A' evaluation fields (`pillar_*`, `factor_*`, `summary_*`, etc.) with your analysis.\n    *   All 'Path B' feedback fields (`missingInformationAnalysis`, `researchRequestToOrchestrator`) MUST be set to `null`.\n\n*   **Path B: If Evidence is INSUFFICIENT (Uninvestable Pitch):**\n    *   Set `evaluationDecision` to `\"REQUEST_MORE_RESEARCH\"`.\n    *   In `missingInformationAnalysis` ('Why I'm Out'), explain the gaps in evidence.\n    *   **Crucially, in `researchRequestToOrchestrator` ('Your Homework')**, provide 3-5 specific, actionable, and distinct questions for the research agent to execute. Do not repeat previous requests.\n    *   All 'Path A' evaluation fields (`pillar_*`, `factor_*`, `summary_*`, `overallRecommendationTier`, etc.) MUST be set to `null`.\n\n---\n\n### Sherpas Durden Internal Context\nYou MUST evaluate \"SD Execution Feasibility\" and \"SD Strategic Alignment\" against this context.\n[Paste your hard-coded context about SD's team, skills, business goals, and ethical principles here.]\n\n---\n\n# Required Unified JSON Output Format\nYour entire output MUST be a single, valid JSON object that strictly adheres to this complete structure. Fill fields based on your decision protocol and set the others to null.\n\n<JSON>\n{\n    \"evaluationDecision\": \"<'EVALUATION_COMPLETE' or 'REQUEST_MORE_RESEARCH'>\",\n    \"overallRecommendationTier\": \"<'High-Potential (Fund It)', 'Promising (Incubate)', 'Niche Bet (Consider Later)', or 'Uninvestable (Pass)', or null>\",\n    \"factor_ProblemSeverityUrgency_Score\": \"<Number 1-5 or null>\",\n    \"factor_ProblemSeverityUrgency_Rationale\": \"<Your rationale or null>\",\n    \"factor_SolutionEffectivenessUniqueness_Score\": \"<Number 1-5 or null>\",\n    \"factor_SolutionEffectivenessUniqueness_Rationale\": \"<Your rationale or null>\",\n    \"factor_SDExecutionFeasibilityMVP_Score\": \"<Number 1-5 or null>\",\n    \"factor_SDExecutionFeasibilityMVP_Rationale\": \"<Your rationale or null>\",\n    \"factor_SDStrategicAlignmentValue_Score\": \"<Number 1-5 or null>\",\n    \"factor_SDStrategicAlignmentValue_Rationale\": \"<Your rationale or null>\",\n    \"factor_MonetizationGrowthPotential_Score\": \"<Number 1-5 or 0 or null>\",\n    \"factor_MonetizationGrowthPotential_Rationale\": \"<Your rationale or null>\",\n    \"factor_ResponsibleInnovationRiskLevel_Score\": \"<Number 1-5, where 1=High Risk, or null>\",\n    \"factor_ResponsibleInnovationRiskLevel_Rationale\": \"<Your rationale or null>\",\n    \"pillar_ProblemMarketFit_Score\": \"<Number 1-10 or null>\",\n    \"pillar_ProblemMarketFit_Rationale\": \"<Your rationale or null>\",\n    \"pillar_SolutionStrength_Score\": \"<Number 1-10 or null>\",\n    \"pillar_SolutionStrength_Rationale\": \"<Your rationale or null>\",\n    \"pillar_SDExecution_Score\": \"<Number 1-10 or null>\",\n    \"pillar_SDExecution_Rationale\": \"<Your rationale or null>\",\n    \"pillar_SDStrategicValue_Score\": \"<Number 1-10 or null>\",\n    \"pillar_SDStrategicValue_Rationale\": \"<Your rationale or null>\",\n    \"summary_KeyStrengths\": \"<'The Bull Case'. A paragraph on why this is a smart investment, or null>\",\n    \"summary_KeyRisksOrConcerns\": \"<'The Bear Case'. A paragraph on what could kill this idea, or null>\",\n    \"summary_ActionableNextSteps\": \"<'The Term Sheet'. A paragraph with immediate next steps, or null>\",\n    \"collated_References\": \"<A comma-separated string of URLs, or null>\",\n    \"missingInformationAnalysis\": \"<'Why I'm Out'. Your explanation of missing evidence, or null>\",\n    \"researchRequestToOrchestrator\": \"<'Your Homework'. Your specific research request, or null>\"\n}\n</JSON>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        -200
+      ],
+      "id": "9354a717-0025-4131-b88f-848a7dfbc5cc",
+      "name": "Evaluator Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1580,
+        40
+      ],
+      "id": "48a18e07-4e62-4705-ab85-913111fca83c",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "IkEKo7mBR6fRcl5d",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"ideaTitle\": \"{{ $('On form submission').item.json['Idea name?'] }}\",\n  \"refinedProblemStatement\": \"{{ $json.output.initialProblemStatement }}\",\n  \"refinedTargetMarket\": \"{{ $json.output.initialTargetMarket }}\",\n  \"ideaOriginationCategory\": \"{{ $json.output.ideaOriginationCategory }}\",\n  \"researchIterationCount\": 1,\n  \"maxResearchIterations\": 2,\n  \"evaluationLoopCount\": 0,\n  \"maxEvaluationLoops\": 1,\n  \"ResearchLog\": \"\",\n  \"EvaluatorFeedback\": \"\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        360
+      ],
+      "id": "3222bd63-4d62-43c3-bfa3-dd69e8407e89",
+      "name": "setInitialState"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d72d266-245e-4f07-a660-140ab2d9e71a",
+              "name": "ResearchLog",
+              "value": "={{\n  (() => {\n    // This entire block is now an executable expression.\n\n    // 1. Get the raw log from the PREVIOUS state via 'prepareInput'.\n    const oldLog = $('prepareInput').item.json.ResearchLog || '';\n\n    // 2. Get the NEW findings from this loop's 'Aggregate' node.\n    const newFindings = $('Aggregate').item.json.researchFindings;\n\n    // 3. Format the new findings into a string.\n    const newLogPart = newFindings.map(f => `--- Research Result ---\nQuery: \"${f.query}\"\nResult: ${f.result}\nSources: ${f.citations && f.citations.length ? f.citations.map(c => `<${c}>`).join(', ') : 'No sources provided.'}\n---`).join('\\n\\n');\n\n    // 4. Return the combined text block to be saved.\n    //    The 'return' statement sends the final value out of the function.\n    return oldLog + '\\n\\n' + newLogPart;\n  })()\n}}\n",
+              "type": "string"
+            },
+            {
+              "id": "80856c77-c24a-4615-8fee-6d986aac0a50",
+              "name": "distilledSummary",
+              "value": "={{ $('Research Distiller').item.json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "ea5bd652-6c5b-4ed8-963b-bf77ea05c6fa",
+              "name": "researchIterationCount",
+              "value": "={{ $('prepareInput').item.json.researchIterationCount + 1}}",
+              "type": "number"
+            },
+            {
+              "id": "cb4fc803-efb8-44c1-9df9-dbf0e7a7fac5",
+              "name": "ideaTitle",
+              "value": "={{ $('prepareInput').item.json.ideaTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "39ef285f-5143-46ee-b0cc-94008820380d",
+              "name": "refinedProblemStatement",
+              "value": "={{ $('prepareInput').item.json.refinedProblemStatement }}",
+              "type": "string"
+            },
+            {
+              "id": "067eb023-ef94-4180-8e99-da48dd1ebca9",
+              "name": "refinedTargetMarket",
+              "value": "={{ $('prepareInput').item.json.refinedTargetMarket }}",
+              "type": "string"
+            },
+            {
+              "id": "e6956cb7-4fbf-4291-a556-bfa3cb292a1d",
+              "name": "ideaOriginationCategory",
+              "value": "={{ $('prepareInput').item.json.ideaOriginationCategory }}",
+              "type": "string"
+            },
+            {
+              "id": "9a44e9e6-c2b2-4528-98b8-50f8674c91c3",
+              "name": "evaluationLoopCount",
+              "value": "={{ $('prepareInput').item.json.evaluationLoopCount }}",
+              "type": "number"
+            },
+            {
+              "id": "e6af0e63-eda3-4953-b8da-d31b0dc61efe",
+              "name": "maxResearchIterations",
+              "value": "={{ $('setInitialState').item.json.maxResearchIterations }}",
+              "type": "number"
+            },
+            {
+              "id": "467356df-f551-4dae-8430-d66ff30eab2f",
+              "name": "maxEvaluationLoops",
+              "value": "={{ $('setInitialState').item.json.maxEvaluationLoops }}",
+              "type": "number"
+            },
+            {
+              "id": "831bd79a-ec6a-4780-8cb6-3f8073458874",
+              "name": "EvaluatorFeedback",
+              "value": "={{ $('prepareInput').item.json.EvaluatorFeedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3280,
+        860
+      ],
+      "id": "7df201ae-140f-4baa-8ae9-80a83ca9dc6e",
+      "name": "updateState"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "175ddc16-bb70-4b9d-8b30-5ff9b2a296d1",
+              "leftValue": "={{ $json.researchIterationCount }}",
+              "rightValue": "={{ $json.maxResearchIterations }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        860,
+        360
+      ],
+      "id": "517ab32b-8e04-4bd6-8692-661a8e239045",
+      "name": "IF: iteration < maxIterations?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1b521c95-eb95-4087-9e1c-92afce60a6f8",
+              "name": "researchIterationCount",
+              "value": "={{ $json.researchIterationCount ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "b96cd5fd-0d22-4483-a7bf-259c76b4c54e",
+              "name": "ResearchLog",
+              "value": "={{ $json.ResearchLog}}",
+              "type": "string"
+            },
+            {
+              "id": "dff5356f-280f-4c48-bee9-edcb83a289e1",
+              "name": "distilledSummary",
+              "value": "={{ $json.distilledSummary }}",
+              "type": "string"
+            },
+            {
+              "id": "450efb8b-7a97-49e6-bbeb-c730c537485d",
+              "name": "sherpasDurdenContext",
+              "value": "Sherpas Durden is a 3-person AI agency specializing in training, consulting, and AI service design. Key priorities include showcasing practical AI, rapid prototyping (<$50, 1 week), and building for SME/Freelancer markets. Ethical principles: fairness, transparency, privacy, human oversight, worker empowerment.",
+              "type": "string"
+            },
+            {
+              "id": "ae1fa92c-789d-4151-942f-1ebb526ea1d3",
+              "name": "ideaTitle",
+              "value": "={{ $json.ideaTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "a5a62239-cb17-4f12-8073-87831dfb0a17",
+              "name": "refinedProblemStatement",
+              "value": "={{ $json.refinedProblemStatement }}",
+              "type": "string"
+            },
+            {
+              "id": "cb146872-a442-4105-8412-18eccd0c7c1d",
+              "name": "refinedTargetMarket",
+              "value": "={{ $json.refinedTargetMarket }}",
+              "type": "string"
+            },
+            {
+              "id": "13eb0262-a020-4f21-9903-3b3e6231adf9",
+              "name": "ideaOriginationCategory",
+              "value": "={{ $json.ideaOriginationCategory }}",
+              "type": "string"
+            },
+            {
+              "id": "58d6953f-7faf-4d83-976e-c863a8a60c25",
+              "name": "evaluationLoopCount",
+              "value": "={{ $json.evaluationLoopCount ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "eb697cc7-a5d2-4e1d-8332-721cc60a069f",
+              "name": "maxEvaluationLoops",
+              "value": "={{ $json.maxEvaluationLoops }}",
+              "type": "number"
+            },
+            {
+              "id": "eb973f6a-b518-41a4-976a-f15009bad0f4",
+              "name": "EvaluatorFeedback",
+              "value": "={{ $json.EvaluatorFeedback ?? null }}",
+              "type": "string"
+            },
+            {
+              "id": "598479db-aa7b-473f-bdaf-4b0efa10acf5",
+              "name": "maxResearchIterations",
+              "value": "={{ $json.maxResearchIterations }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        480
+      ],
+      "id": "06de5e1c-8e49-48df-b724-2ced29f7bb0a",
+      "name": "prepareInput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        660,
+        360
+      ],
+      "id": "683f5fdb-227f-49c3-8fec-e17b6c2e89ff",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{ \"evaluationDecision\": \"<'EVALUATION_COMPLETE' or 'REQUEST_MORE_RESEARCH'>\",\n\"overallRecommendationTier\": \"<'High-Potential (Fund It)', 'Promising (Incubate)', 'Niche Bet (Consider Later)', or 'Uninvestable (Pass)', or null>\",\n\"factor_ProblemSeverityUrgency_Score\": \"<Number 1-5 or null>\",\n\"factor_ProblemSeverityUrgency_Rationale\": \"<Your rationale or null>\",\n\"factor_SolutionEffectivenessUniqueness_Score\": \"<Number 1-5 or null>\",\n\"factor_SolutionEffectivenessUniqueness_Rationale\": \"<Your rationale or null>\",\n\"factor_SDExecutionFeasibilityMVP_Score\": \"<Number 1-5 or null>\",\n\"factor_SDExecutionFeasibilityMVP_Rationale\": \"<Your rationale or null>\",\n\"factor_SDStrategicAlignmentValue_Score\": \"<Number 1-5 or null>\",\n\"factor_SDStrategicAlignmentValue_Rationale\": \"<Your rationale or null>\",\n\"factor_MonetizationGrowthPotential_Score\": \"<Number 1-5 or 0 or null>\",\n\"factor_MonetizationGrowthPotential_Rationale\": \"<Your rationale or null>\",\n\"factor_ResponsibleInnovationRiskLevel_Score\": \"<Number 1-5, where 1=High Risk, or null>\",\n\"factor_ResponsibleInnovationRiskLevel_Rationale\": \"<Your rationale or null>\",\n\"pillar_ProblemMarketFit_Score\": \"<Number 1-10 or null>\",\n\"pillar_ProblemMarketFit_Rationale\": \"<Your rationale or null>\",\n\"pillar_SolutionStrength_Score\": \"<Number 1-10 or null>\",\n\"pillar_SolutionStrength_Rationale\": \"<Your rationale or null>\",\n\"pillar_SDExecution_Score\": \"<Number 1-10 or null>\",\n\"pillar_SDExecution_Rationale\": \"<Your rationale or null>\",\n\"pillar_SDStrategicValue_Score\": \"<Number 1-10 or null>\",\n\"pillar_SDStrategicValue_Rationale\": \"<Your rationale or null>\",\n\"summary_KeyStrengths\": \"<'The Bull Case'. A paragraph on why this is a smart investment, or null>\",\n\"summary_KeyRisksOrConcerns\": \"<'The Bear Case'. A paragraph on what could kill this idea, or null>\",\n\"summary_ActionableNextSteps\": \"<'The Term Sheet'. A paragraph with immediate next steps, or null>\",\n\"collated_References\": \"<A comma-separated string of URLs, or null>\",\n\n\"missingInformationAnalysis\": \"<'Why I'm Out'. Your explanation of missing evidence, or null>\",\n\"researchRequestToOrchestrator\": \"<'Your Homework'. Your specific research request, or null>\"\n\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        40
+      ],
+      "id": "09c189be-3b69-4234-affd-e421505148c7",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "content": "# IDEA EVALUATOR\n1. Fill out form to upload idea\n2. Format idea ready for analysis\n3. Research Orchestrator performs rounds of Perplexity Research\n4. Research Distiller uses Chain of Density to create rich summary of research\n5. When \"researchIterationCount\": 1 >   \"maxResearchIterations\": 1 -> Go to Evaluator Agent\n6. Evaluator Agent decides if more research is required and assess idea\n7. When \"evaluationLoopCount\": 0 >  \"maxEvaluationLoops\": 2, -> Output to Notion\n8. Prepare and upload to Notion as a new database item\n\n## Configure\n- Models (4o-mini as default, (and o4-mini for Evaluator and Distiller))\n- Max iterations in setInitialState\n\n## Issues\n- distilledSummary is too large >2000 characters so not appearing in Notion\n\n## Improvements\n- Slack integration for back and forth\n- Form exposed online\n- Visual outputs/graphs of evaluated ideas (in Notion)\n",
+        "height": 580,
+        "width": 1260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -420
+      ],
+      "id": "01f83030-ddc3-422f-9b9b-11fb3ac7ad63",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3cd7d1c3-cfac-47db-8029-acbf69e2ec77",
+              "leftValue": "={{ $json.output.evaluationDecision }}",
+              "rightValue": "EVALUATION_COMPLETE",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        -300
+      ],
+      "id": "c90ec6fd-f722-47f2-a832-a24e569bb9d2",
+      "name": "IF: evaluationComplete"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d72d266-245e-4f07-a660-140ab2d9e71a",
+              "name": "ResearchLog",
+              "value": "={{ `---\n**ORCHESTRATOR'S CONCLUSION**\n*Sufficient information gathered. Exiting research loop.*\n\n**Reasoning:** ${$json.output?.reasoningForDecision || 'No reasoning provided.'}\n---\n\n${$json.ResearchLog || ''}` }}",
+              "type": "string"
+            },
+            {
+              "id": "ea5bd652-6c5b-4ed8-963b-bf77ea05c6fa",
+              "name": "researchIterationCount",
+              "value": "={{ $('prepareInput').item.json.maxResearchIterations  +1}}",
+              "type": "number"
+            },
+            {
+              "id": "cb4fc803-efb8-44c1-9df9-dbf0e7a7fac5",
+              "name": "ideaTitle",
+              "value": "={{ $('prepareInput').item.json.ideaTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "39ef285f-5143-46ee-b0cc-94008820380d",
+              "name": "refinedProblemStatement",
+              "value": "={{ $('prepareInput').item.json.refinedProblemStatement }}",
+              "type": "string"
+            },
+            {
+              "id": "067eb023-ef94-4180-8e99-da48dd1ebca9",
+              "name": "refinedTargetMarket",
+              "value": "={{ $('prepareInput').item.json.refinedTargetMarket }}",
+              "type": "string"
+            },
+            {
+              "id": "e6956cb7-4fbf-4291-a556-bfa3cb292a1d",
+              "name": "ideaOriginationCategory",
+              "value": "={{ $('prepareInput').item.json.ideaOriginationCategory }}",
+              "type": "string"
+            },
+            {
+              "id": "9a44e9e6-c2b2-4528-98b8-50f8674c91c3",
+              "name": "evaluationLoopCount",
+              "value": "={{ $('prepareInput').item.json.evaluationLoopCount }}",
+              "type": "number"
+            },
+            {
+              "id": "e6af0e63-eda3-4953-b8da-d31b0dc61efe",
+              "name": "maxResearchIterations",
+              "value": "={{ $('setInitialState').item.json.maxResearchIterations }}",
+              "type": "number"
+            },
+            {
+              "id": "467356df-f551-4dae-8430-d66ff30eab2f",
+              "name": "maxEvaluationLoops",
+              "value": "={{ $('setInitialState').item.json.maxEvaluationLoops }}",
+              "type": "number"
+            },
+            {
+              "id": "831bd79a-ec6a-4780-8cb6-3f8073458874",
+              "name": "EvaluatorFeedback",
+              "value": "={{ $('prepareInput').item.json.EvaluatorFeedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1880,
+        860
+      ],
+      "id": "8ae03b4b-211d-4c8d-8f96-792ebccd0ce0",
+      "name": "sufficientInfo",
+      "notes": "researchIterationCount uses maxIterations + 1 so that it escapes the loop early"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "87fcfb91-5731-4fde-a3b6-afac2b1a260b",
+              "name": "notion_title",
+              "value": "={{ $('IF: evaluationLoop < maxEvaluations').item.json.ideaTitle != null ? $('IF: evaluationLoop < maxEvaluations').item.json.ideaTitle : 'Untitled Idea' }}",
+              "type": "string"
+            },
+            {
+              "id": "9a108725-03ae-4643-8bb5-39217ac6731c",
+              "name": "notion_markdown_report",
+              "value": "={{ \n`# 💡 Idea Evaluation: ${$json.output?.ideaTitle || 'Untitled'}\n\n## Overall Recommendation\n**Tier:** ${$json.output?.overallRecommendationTier || 'N/A'}\n\n## Key Summaries\n### The Bull Case (Strengths)\n${$json.output?.summary_KeyStrengths || 'No data provided.'}\n\n### The Bear Case (Risks & Concerns)\n${$json.output?.summary_KeyRisksOrConcerns || 'No data provided.'}\n\n### The Term Sheet (Next Steps)\n${$json.output?.summary_ActionableNextSteps || 'No data provided.'}\n\n--- \n## Pillar Scores\n*   **Problem-Market Fit:** ${$json.output?.pillar_ProblemMarketFit_Score ?? 'N/A'}/10\n    *   *${$json.output?.pillar_ProblemMarketFit_Rationale || ''}*\n*   **Solution Strength:** ${$json.output?.pillar_SolutionStrength_Score ?? 'N/A'}/10\n    *   *${$json.output?.pillar_SolutionStrength_Rationale || ''}*\n*   **SD Execution:** ${$json.output?.pillar_SDExecution_Score ?? 'N/A'}/10\n    *   *${$json.output?.pillar_SDExecution_Rationale || ''}*\n*   **SD Strategic Value:** ${$json.output?.pillar_SDStrategicValue_Score ?? 'N/A'}/10\n    *   *${$json.output?.pillar_SDStrategicValue_Rationale || ''}*\n`\n}}\n",
+              "type": "string"
+            },
+            {
+              "id": "9503b004-432b-4b0f-baad-8b76b8ac447e",
+              "name": "notion_problem_score",
+              "value": "={{ Number($json.output.factor_ProblemSeverityUrgency_Score) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "cd61d566-e2c8-48d8-ae3b-07f8e74e7229",
+              "name": "notion_solution_score",
+              "value": "={{ Number($json.output.factor_SolutionEffectivenessUniqueness_Score) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "3f8eb7c7-1b57-4548-ad84-1d3404908450",
+              "name": "notion_execution_score",
+              "value": "={{ Number($json.output.factor_SDExecutionFeasibilityMVP_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "b9270fa5-8b57-4ba4-b1df-df9e758da857",
+              "name": "notion_strategy_score",
+              "value": "={{ Number($json.output.factor_SDStrategicAlignmentValue_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "d334b83a-f08d-4037-8b3c-9ac1f0dea346",
+              "name": "notion_monetisation_score",
+              "value": "={{ Number($json.output.factor_MonetizationGrowthPotential_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "62e45b4d-627a-49d9-9e3a-16756f8494ca",
+              "name": "notion_innovation_score",
+              "value": "={{ Number($json.output.factor_ResponsibleInnovationRiskLevel_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "48684e3a-8730-4404-b91f-c70713a9a375",
+              "name": "pillar_market_fit",
+              "value": "={{ Number($json.output.pillar_ProblemMarketFit_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "6565e385-a41d-40bd-b94b-13ef6e574efc",
+              "name": "pillar_solution",
+              "value": "={{ Number($json.output.pillar_SolutionStrength_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "6d10a778-6281-446c-9db3-591923569368",
+              "name": "pillar_execution",
+              "value": "={{ Number($json.output.pillar_SDExecution_Score) || 0}}",
+              "type": "number"
+            },
+            {
+              "id": "4432a625-c2cb-406d-b459-a665dbdd007c",
+              "name": "pillar_strategy",
+              "value": "={{ Number($json.output.pillar_SDStrategicValue_Score) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "896194c0-9c0d-45cf-9fd8-568ecd337c26",
+              "name": "summary_KeyStrengths",
+              "value": "={{ String($json.output.summary_KeyStrengths)  }}",
+              "type": "string"
+            },
+            {
+              "id": "026c52cc-2d70-4c03-8689-667f48c4c7cb",
+              "name": "summary_KeyRisksOrConcerns",
+              "value": "={{ $json.output.summary_KeyRisksOrConcerns  }}",
+              "type": "string"
+            },
+            {
+              "id": "a44dbb34-50f6-45a6-86f4-e67d498a141d",
+              "name": "summary_ActionableNextSteps",
+              "value": "={{ $json.output.summary_ActionableNextSteps }}",
+              "type": "string"
+            },
+            {
+              "id": "cf0daba7-7bdf-40ec-8369-aefcb9112a15",
+              "name": "collated_References",
+              "value": "={{\n`\n--- \n## References\n${$json.output.collated_References || 'No references available.'}\n`\n}}",
+              "type": "string"
+            },
+            {
+              "id": "414c6cc4-b767-4628-b6ff-ef96b8166bf4",
+              "name": "overall_Recommendation",
+              "value": "={{ $json.output.overallRecommendationTier }}",
+              "type": "string"
+            },
+            {
+              "id": "277304da-b04c-4917-9b47-1d8f627ef813",
+              "name": "distilledSummary",
+              "value": "={{\n  (() => {\n    // This references the final, complete distilled summary object from the evaluator loop.\n    // Note: Update the node name if it's different. I'm assuming the data comes from the \"IF: Output Exists\" node's true path.\n    const summaryObject = $('IF: evaluationLoop < maxEvaluations').item.json.distilledSummary;\n\n    if (!summaryObject) return \"No research summary available.\";\n    \n    // The JSON from the state might be a string, so we must parse it.\n    const knowledge = (typeof summaryObject === 'string') ? JSON.parse(summaryObject) : summaryObject;\n\n    const summarySection = `## Key Insights & Synthesis\\n${knowledge.distilledSummary || ''}\\n\\n`;\n    const factsSection = '## Cited Findings\\n' + (knowledge.citedFacts || []).map(item => `- ${item.fact} ${(item.sources || []).map(url => `<${url}>`).join(' ')}`).join('\\n') + '\\n\\n';\n    const referencesSection = '## Source List\\n' + (knowledge.collatedReferences || []).map(url => `- <${url}>`).join('\\n');\n    \n    return summarySection + factsSection + referencesSection;\n  })()\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2620,
+        -220
+      ],
+      "id": "60d2241b-5f20-4628-bcd4-d0802e65471b",
+      "name": "prepareForNotion"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3cd7d1c3-cfac-47db-8029-acbf69e2ec77",
+              "leftValue": "={{ $('IF: iteration < maxIterations?').item.json.evaluationLoopCount }}",
+              "rightValue": "={{ $('IF: iteration < maxIterations?').item.json.maxEvaluationLoops }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        -100
+      ],
+      "id": "3e86b0c2-15e2-4f2f-8c09-ed6c4e3fb5d7",
+      "name": "IF: evaluationLoop < maxEvaluations"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ff20cee-fc46-4572-ad7b-541fed209e00",
+              "name": "isForcedFinalEvaluation",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1380,
+        20
+      ],
+      "id": "252537d6-f1e6-4225-b03d-1f0dcd745664",
+      "name": "setFinalEvaluation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "afc5d31c-9c79-48d7-85a1-163ccfad89a7",
+              "name": "evaluationLoopCount",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.evaluationLoopCount + 1}}",
+              "type": "number"
+            },
+            {
+              "id": "b7dcaf50-35ab-4fa6-ad67-75d60d95a917",
+              "name": "EvaluatorFeedback",
+              "value": "=Critically Missing Info: {{ $json.output.missingInformationAnalysis }}\\n\\nNew Research Request:{{ $json.output.researchRequestToOrchestrator }}",
+              "type": "string"
+            },
+            {
+              "id": "8c282d28-a621-45c7-8187-2d6e3867d271",
+              "name": "ideaTitle",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.ideaTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "97aa393e-74e3-42f1-bf08-3d44c4a507dd",
+              "name": "refinedProblemStatement",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.refinedProblemStatement }}",
+              "type": "string"
+            },
+            {
+              "id": "6b593b5a-98ae-4a45-bf02-d9dc481da070",
+              "name": "refinedTargetMarket",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.refinedTargetMarket }}",
+              "type": "string"
+            },
+            {
+              "id": "6efdef24-cf8f-4e39-8219-d5dc3a4a046f",
+              "name": "ideaOriginationCategory",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.ideaOriginationCategory }}",
+              "type": "string"
+            },
+            {
+              "id": "4bf7ab4a-6d21-433e-813c-f8dccbef30d3",
+              "name": "researchIterationCount",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.researchIterationCount }}",
+              "type": "number"
+            },
+            {
+              "id": "98f705d6-47cc-442e-aff3-af1c71e1736a",
+              "name": "maxResearchIterations",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.maxResearchIterations }}",
+              "type": "number"
+            },
+            {
+              "id": "c5dc6107-4d70-48f3-83f4-6a48492866f7",
+              "name": "ResearchLog",
+              "value": "={{ $('IF: iteration < maxIterations?').item.json.ResearchLog }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2200,
+        20
+      ],
+      "id": "6149a889-4547-42b2-971e-1a7c3865588a",
+      "name": "prepareFeedback"
+    },
+    {
+      "parameters": {
+        "content": "## Research Orchestrator Agent\n\n- Creates research prompts, completes perplexity research, updates state\n- Can exit early if agent thinks there is sufficient Info.\n",
+        "height": 820,
+        "width": 2420,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1060,
+        260
+      ],
+      "typeVersion": 1,
+      "id": "41fa6842-1c33-4b34-8373-e101a61909c0",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Form input and format idea\n\n- takes a form input, does initial idea refinement, sets initial state\n- Can change research count and evaluation count\n",
+        "height": 920,
+        "width": 1260,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "66c0b297-0f54-4219-95f1-6e7d937760e4",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Evaluator agent (Dragon investor)\n\n- Evaluates research so far, provides and prepares feedback\n- if maxIterations outputs to Notion\n- Set to o4-mini\n",
+        "height": 680,
+        "width": 1400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1060,
+        -420
+      ],
+      "typeVersion": 1,
+      "id": "9ef5e7e9-7a97-46a8-a14f-30f095468421",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "\n## Creates Notion database item\n\n- Prepares for Notion, creates database item, appends to page\n- Some issues with adding all research logs (too large) to Notion",
+        "height": 680,
+        "width": 1020,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2460,
+        -420
+      ],
+      "typeVersion": 1,
+      "id": "13eb00e8-9398-406f-b764-7c7844ef43be",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3cd7d1c3-cfac-47db-8029-acbf69e2ec77",
+              "leftValue": "={{ $json.output.evaluationDecision }}",
+              "rightValue": "EVALUATION_COMPLETE",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        -200
+      ],
+      "id": "0f82963a-3303-46ce-9cdc-375b14ad7fce",
+      "name": "IF: Output Exists"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2720,
+        880
+      ],
+      "id": "8746412d-9daa-45a0-9d82-8e98b360050e",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "IkEKo7mBR6fRcl5d",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"distilledSummary\": \"Example summary...\",\n  \"citedFacts\": [\n    {\n      \"fact\": \"Example fact...\",\n      \"sources\": [\"https://example.com\"]\n    }\n  ],\n  \"collatedReferences\": [\"https://example.com\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2940,
+        880
+      ],
+      "id": "6346c6af-9bec-4346-86cd-aa62372763f1",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{\n/**\n * Build the full historical ResearchLog for the Distiller and\n * immediately return the final prompt string for the model.\n */\n(() => {\n\n  // --- 1. Pull previous raw log ---------------------------\n  const oldLog = $('prepareInput')?.item?.json?.ResearchLog || '';\n\n  // --- 2. Pull NEW findings produced in this loop ----------\n  const newFindings = $('Aggregate')?.item?.json?.researchFindings || [];\n\n  // --- 3. Render those new findings to text ----------------\n  const newLogPart = newFindings.map((f, i) => `--- Research Result ---\nQuery: \"${f.query || 'No query'}\"\nResult: ${f.result || 'No result'}\n\nSources:\n${\n  (f.citations || []).length\n    ? f.citations.map((c, i) => `- Source ${i + 1}: <${c}>`).join('\\n')\n    : 'No sources provided.'\n}\n---`).join('\\n\\n');\n\n  // --- 4. Stitch old + new together ------------------------\n  const fullHistoricalLog = [oldLog, newLogPart].filter(Boolean).join('\\n\\n');\n\n  // --- 5. Emit the final user prompt -----------------------\n  return `Below is the complete raw ResearchLog for distillation. Follow your system instructions and output ONLY the JSON object.\n\n${fullHistoricalLog}\n`;\n\n})();\n}}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# MISSION\nYou are a \"Research Distiller.\" Your job is to take a raw, messy ResearchLog and transform it into a dense, structured, and fully-cited knowledge asset. Do not add opinions; you only extract and synthesise facts.\n\n# METHOD — CHAIN OF DENSITY FOR FACTUAL DISTILLATION\n1. Initial pass – identify all key entities, facts, statistics, claims.  \n2. Second pass – extract each distinct fact and attach its source URL(s).  \n3. Third pass – weave the facts into a concise, neutral synthesis paragraph.  \n4. Fourth pass – create a de-duplicated list of all unique source URLs.  \n5. Final pass – assemble exactly the JSON described below.\n\n# OUTPUT MANDATE (NO MARK-UP, NO EXTRA TEXT)\nYour *entire* response **must** be a single, valid JSON object that fits this schema and nothing else – no markdown fences, no prose outside the braces.\n\n{\n  \"distilledSummary\": \"A dense, multi-paragraph synthesis of the key findings, referencing the facts.\",\n  \"citedFacts\": [\n    {\n      \"fact\": \"<One specific fact, claim, or statistic>\",\n      \"sources\": [\"<URL-1>\", \"<URL-2>\"]\n    }\n  ],\n  \"collatedReferences\": [\"<URL-1>\", \"<URL-2>\", \"...\"]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2760,
+        640
+      ],
+      "id": "f886e68f-93f1-4dee-a5e7-4bd6a9c294e1",
+      "name": "Research Distiller"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3cd7d1c3-cfac-47db-8029-acbf69e2ec77",
+              "leftValue": "={{ $json.toJsonString(output) }}",
+              "rightValue": "collatedReferences",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "5d9ebadc-fe6d-4fe6-b88e-58df77ba32a7",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3120,
+        640
+      ],
+      "id": "6ef2541a-a4fe-439e-801b-d0ed42e61160",
+      "name": "IF: Output Exists2"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "textContent": "={{ $('prepareForNotion').item.json.notion_markdown_report }}"
+            },
+            {
+              "textContent": "={{ $('prepareForNotion').item.json.collated_References }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        3080,
+        -220
+      ],
+      "id": "02e3e51b-4cc4-4d0c-9afb-d147b96f8ec3",
+      "name": "Append to page",
+      "credentials": {
+        "notionApi": {
+          "id": "6ceGpsUoccoJTDFk",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2142b731-4780-80f1-84f6-fa94f8e075ce",
+          "mode": "list",
+          "cachedResultName": "Idea Evaluator",
+          "cachedResultUrl": "https://www.notion.so/2142b731478080f184f6fa94f8e075ce"
+        },
+        "title": "={{ $json.notion_title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Date Added|date",
+              "includeTime": false,
+              "date": "={{ $now }}"
+            },
+            {
+              "key": "Status|status",
+              "statusValue": "AI Analysis"
+            },
+            {
+              "key": "Evaluator|select",
+              "selectValue": "AI"
+            },
+            {
+              "key": "Evaluation Date|date",
+              "includeTime": false,
+              "date": "={{ $now }}"
+            },
+            {
+              "key": "Initial problem statement|rich_text",
+              "textContent": "={{ $('setInitialState').item.json.refinedProblemStatement }}"
+            },
+            {
+              "key": "Initial Target Market|rich_text",
+              "textContent": "={{ $('setInitialState').item.json.refinedTargetMarket }}"
+            },
+            {
+              "key": "Idea Origination Category|select",
+              "selectValue": "=  {{ $('setInitialState').item.json.ideaOriginationCategory }}"
+            },
+            {
+              "key": "Problem Severity|number",
+              "numberValue": "={{ $json.notion_problem_score }}"
+            },
+            {
+              "key": "Solution effectiveness|number",
+              "numberValue": "={{ $json.notion_solution_score }}"
+            },
+            {
+              "key": "Execution Feasibility|number",
+              "numberValue": "={{ $json.notion_execution_score }}"
+            },
+            {
+              "key": "Strategic Alignment|number",
+              "numberValue": "={{ $json.notion_strategy_score }}"
+            },
+            {
+              "key": "Monetisation Potential|number",
+              "numberValue": "={{ $json.notion_monetisation_score }}"
+            },
+            {
+              "key": "Innovation Risk level|number",
+              "numberValue": "={{ $json.notion_innovation_score }}"
+            },
+            {
+              "key": "P - Problem Market Fit|number",
+              "numberValue": "={{ $json.pillar_market_fit }}"
+            },
+            {
+              "key": "P - Solution Strength|number",
+              "numberValue": "={{ $json.pillar_solution }}"
+            },
+            {
+              "key": "P - SD Execution Score|number",
+              "numberValue": "={{ $json.pillar_execution }}"
+            },
+            {
+              "key": "P - SD Strategic Value|number",
+              "numberValue": "={{ $json.pillar_strategy }}"
+            },
+            {
+              "key": "Key Strengths|rich_text",
+              "textContent": "={{ $json.summary_KeyStrengths }}"
+            },
+            {
+              "key": "Key Risks|rich_text",
+              "textContent": "={{ $json.summary_KeyRisksOrConcerns }}"
+            },
+            {
+              "key": "AI Next Steps|rich_text",
+              "textContent": "={{ $json.summary_ActionableNextSteps }}"
+            },
+            {
+              "key": "Evaluation Decision|rich_text",
+              "textContent": "={{ $json.overall_Recommendation }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2840,
+        -220
+      ],
+      "id": "8459626d-763a-48ee-a255-a8cb4806288a",
+      "name": "Create Notion Page",
+      "credentials": {
+        "notionApi": {
+          "id": "6ceGpsUoccoJTDFk",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Idea name?": "Zero Inbox Guardian",
+          "Initial Problem Statement?": "Outcome: Protect founder energy and focus by managing email overload. Function: Summarizes emails, flags urgent items, drafts replies, suggests meetings/actions.",
+          "Initial Target Market?": "Small Business owner. Tech Examples: n8n, Google Workspace, Slack/messaging bots. Benefit: Peace of mind, decision support, and efficient execution logic for communications.",
+          "Idea Category": "General Business/Startup Ideas",
+          "submittedAt": "2025-06-17T15:56:50.277+02:00",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Idea Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Idea Formatter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Idea Formatter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idea Formatter": {
+      "main": [
+        [
+          {
+            "node": "setInitialState",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Research Orchestrator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "checkResearchDecision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perplexity": {
+      "main": [
+        [
+          {
+            "node": "setResearchFinding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checkResearchDecision": {
+      "main": [
+        [
+          {
+            "node": "sufficientInfo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setResearchFinding": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Research Distiller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Evaluator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setInitialState": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateState": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: iteration < maxIterations?": {
+      "main": [
+        [
+          {
+            "node": "prepareInput",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF: evaluationLoop < maxEvaluations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepareInput": {
+      "main": [
+        [
+          {
+            "node": "Research Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "IF: iteration < maxIterations?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Evaluator Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluator Agent": {
+      "main": [
+        [
+          {
+            "node": "IF: Output Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: evaluationComplete": {
+      "main": [
+        [
+          {
+            "node": "prepareForNotion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prepareFeedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sufficientInfo": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepareForNotion": {
+      "main": [
+        [
+          {
+            "node": "Create Notion Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: evaluationLoop < maxEvaluations": {
+      "main": [
+        [
+          {
+            "node": "Evaluator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "setFinalEvaluation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setFinalEvaluation": {
+      "main": [
+        [
+          {
+            "node": "Evaluator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepareFeedback": {
+      "main": [
+        [
+          {
+            "node": "prepareInput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Output Exists": {
+      "main": [
+        [
+          {
+            "node": "IF: evaluationComplete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research Distiller",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Research Distiller",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Distiller": {
+      "main": [
+        [
+          {
+            "node": "IF: Output Exists2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Output Exists2": {
+      "main": [
+        [
+          {
+            "node": "updateState",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Notion Page": {
+      "main": [
+        [
+          {
+            "node": "Append to page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "037779df-2af5-4158-ad1d-880d08c5fa49",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e700d34c5408b0209d1ce8b933c3446d0d7eaed27a3db321d68067caa1332dae"
+  },
+  "id": "gNGaRAUgGoxc4nhz",
+  "tags": []
+}
